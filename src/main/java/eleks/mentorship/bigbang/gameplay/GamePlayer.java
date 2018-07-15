@@ -2,6 +2,7 @@ package eleks.mentorship.bigbang.gameplay;
 
 import eleks.mentorship.bigbang.Player;
 import eleks.mentorship.bigbang.util.Position;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,10 +11,11 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class GamePlayer {
     private Player player;
-    private int livesLeft = 3;
-    private int bombsLeft = 5;
+    private Integer livesLeft = 3;
+    private Integer bombsLeft = 5;
     private Position position = new Position();
 
     public GamePlayer(Player player) {

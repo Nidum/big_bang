@@ -1,5 +1,6 @@
 package eleks.mentorship.bigbang.config;
 
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.HandlerMapping;
@@ -15,6 +16,7 @@ import java.util.Map;
  * Created by Emiliia Nesterovych on 7/1/2018.
  */
 @Configuration
+//@AllArgsConstructor
 public class WebSocketConfig {
 
     @Inject

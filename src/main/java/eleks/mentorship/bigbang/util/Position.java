@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Position {
-    private int x;
-    private int y;
+    private Integer x;
+    private Integer y;
 }

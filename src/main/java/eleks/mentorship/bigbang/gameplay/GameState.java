@@ -1,6 +1,6 @@
 package eleks.mentorship.bigbang.gameplay;
 
-import eleks.mentorship.bigbang.websocket.message.Message;
+import eleks.mentorship.bigbang.websocket.message.PositionMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -21,7 +21,7 @@ public class GameState {
      * @param messages Messages to be agregated
      * @return Current game state.
      */
-    public GameState produceGameState(List<Message> messages){
+    public GameState produceGameState(List<PositionMessage> messages){
 
         return null;
     }
