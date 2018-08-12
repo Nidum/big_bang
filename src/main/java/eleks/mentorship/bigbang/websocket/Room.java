@@ -6,6 +6,7 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -18,23 +19,31 @@ public class Room {
     private static final int MAX_CONNECTIONS = 2;
     private String name;
     private Set<WebSocketSession> players;
-    private ConnectableFlux<WebSocketMessage> gameFlow;
+    private Flux<WebSocketMessage> messageFlux = Flux.empty();
+    private ConnectableFlux<WebSocketMessage> connectableMessageFlux;
 
     public Room() {
         players = new HashSet<>();
         name = UUID.randomUUID().toString();
-        initGameFlow();
     }
 
     public Room(String name) {
         this.name = name;
     }
 
+//    public void startGame() {
+////        players.forEach(player->gameFlow.subscribe(x->{
+////            player.send(Flux.just(x));
+////        }));
+////        gameFlow.connect();
+////        gameFlow.doOnEach(x -> {
+////            players.forEach(z -> z.send(Mono.just(x.get())));
+////        });
+//    }
+
     public void startGame(){
-        players.forEach(player->gameFlow.subscribe(x->{
-            player.send(Flux.just(x));
-        }));
-        gameFlow.connect();
+        connectableMessageFlux = messageFlux.log().publish();
+        connectableMessageFlux.connect();
     }
 
     //TODO: Add watchers.
@@ -47,13 +56,10 @@ public class Room {
         return players.size() == MAX_CONNECTIONS;
     }
 
-    private void initGameFlow() {
-        //.skipUntil(x -> players.size() == MAX_CONNECTIONS)
-        gameFlow = Flux.empty().map(x -> (WebSocketMessage) x).publish();
-    }
     public void addPlayer(WebSocketSession player) {
         players.add(player);
-        if(players.size() == MAX_CONNECTIONS){
+        messageFlux = messageFlux.concatWith(player.receive());
+        if (players.size() == MAX_CONNECTIONS) {
             this.startGame();
         }
     }
