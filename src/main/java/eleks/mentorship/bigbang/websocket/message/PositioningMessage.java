@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class PositionMessage {
+public class PositioningMessage {
     private GamePlayer gamePlayer;
     private Position position;
-    private MessageType type;
+    private PositioningMessageType type;
 }

@@ -19,8 +19,7 @@ public class Room {
     private static final int MAX_CONNECTIONS = 2;
     private String name;
     private Set<WebSocketSession> players;
-    private Flux<WebSocketMessage> messageFlux = Flux.empty();
-    private ConnectableFlux<WebSocketMessage> connectableMessageFlux;
+
 
     public Room() {
         players = new HashSet<>();
@@ -31,19 +30,8 @@ public class Room {
         this.name = name;
     }
 
-//    public void startGame() {
-////        players.forEach(player->gameFlow.subscribe(x->{
-////            player.send(Flux.just(x));
-////        }));
-////        gameFlow.connect();
-////        gameFlow.doOnEach(x -> {
-////            players.forEach(z -> z.send(Mono.just(x.get())));
-////        });
-//    }
-
     public void startGame(){
-        connectableMessageFlux = messageFlux.log().publish();
-        connectableMessageFlux.connect();
+
     }
 
     //TODO: Add watchers.
@@ -58,7 +46,7 @@ public class Room {
 
     public void addPlayer(WebSocketSession player) {
         players.add(player);
-        messageFlux = messageFlux.concatWith(player.receive());
+        
         if (players.size() == MAX_CONNECTIONS) {
             this.startGame();
         }

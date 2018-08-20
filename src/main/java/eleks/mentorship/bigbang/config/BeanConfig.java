@@ -2,7 +2,7 @@ package eleks.mentorship.bigbang.config;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eleks.mentorship.bigbang.websocket.message.PositionMessage;
+import eleks.mentorship.bigbang.websocket.message.PositioningMessage;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Flux;
@@ -21,12 +21,12 @@ public class BeanConfig {
     }
 
     @Bean
-    public UnicastProcessor<PositionMessage> eventPublisher(){
+    public UnicastProcessor<PositioningMessage> eventPublisher(){
         return UnicastProcessor.create();
     }
 
     @Bean
-    public Flux<PositionMessage> events(UnicastProcessor<PositionMessage> eventPublisher) {
+    public Flux<PositioningMessage> events(UnicastProcessor<PositioningMessage> eventPublisher) {
         return eventPublisher
                 .replay(25)
                 .autoConnect();
