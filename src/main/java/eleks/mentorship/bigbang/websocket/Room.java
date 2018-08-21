@@ -1,12 +1,15 @@
 package eleks.mentorship.bigbang.websocket;
 
+import eleks.mentorship.bigbang.mapper.JsonEventMapper;
+import eleks.mentorship.bigbang.websocket.message.PositioningMessage;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
-import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.UnicastProcessor;
 
-import java.util.Arrays;
+import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -20,33 +23,45 @@ public class Room {
     private String name;
     private Set<WebSocketSession> players;
 
+    private JsonEventMapper mapper;
+    private WebSocketMessageSubscriber messageSubscriber;
+    private UnicastProcessor<PositioningMessage> eventPublisher;
+    private Flux<PositioningMessage> outputEvents;
 
     public Room() {
-        players = new HashSet<>();
         name = UUID.randomUUID().toString();
+        players = new HashSet<>();
+        this.eventPublisher = UnicastProcessor.create();
+        this.outputEvents = eventPublisher
+                .replay(25)
+                .autoConnect();
+        this.messageSubscriber = new WebSocketMessageSubscriber(eventPublisher);
     }
 
     public Room(String name) {
+        this();
         this.name = name;
     }
 
-    public void startGame(){
+    public void startGame() {
 
     }
 
-    //TODO: Add watchers.
-
     public boolean isEmpty() {
-        return players.isEmpty(); // && watchers.isEmpty()
+        return players.isEmpty();
     }
 
     public boolean isFilled() {
         return players.size() == MAX_CONNECTIONS;
     }
 
-    public void addPlayer(WebSocketSession player) {
-        players.add(player);
-        
+    public void addPlayer(WebSocketSession session) {
+        players.add(session);
+        session.receive()
+                .map(WebSocketMessage::getPayloadAsText)
+                .map(mapper::toEvent)
+                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+
         if (players.size() == MAX_CONNECTIONS) {
             this.startGame();
         }
