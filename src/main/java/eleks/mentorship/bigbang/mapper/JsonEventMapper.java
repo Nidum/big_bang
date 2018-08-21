@@ -2,7 +2,7 @@ package eleks.mentorship.bigbang.mapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eleks.mentorship.bigbang.websocket.message.PositioningMessage;
+import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -18,15 +18,15 @@ public class JsonEventMapper {
         mapper = new ObjectMapper();
     }
 
-    public PositioningMessage toEvent(String json) {
+    public GameMessage toEvent(String json) {
         try {
-            return mapper.readValue(json, PositioningMessage.class);
+            return mapper.readValue(json, GameMessage.class);
         } catch (IOException e) {
             throw new RuntimeException("Invalid JSON:" + json, e);
         }
     }
 
-    public String toJSON(PositioningMessage event) {
+    public String toJSON(GameMessage event) {
         try {
             return mapper.writeValueAsString(event);
         } catch (JsonProcessingException e) {

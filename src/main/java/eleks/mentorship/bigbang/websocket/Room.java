@@ -1,12 +1,15 @@
 package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.mapper.JsonEventMapper;
+import eleks.mentorship.bigbang.websocket.message.GameMessage;
+import eleks.mentorship.bigbang.websocket.message.GameStartMessage;
 import eleks.mentorship.bigbang.websocket.message.PositioningMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
 
 import javax.inject.Inject;
@@ -25,8 +28,8 @@ public class Room {
 
     private JsonEventMapper mapper;
     private WebSocketMessageSubscriber messageSubscriber;
-    private UnicastProcessor<PositioningMessage> eventPublisher;
-    private Flux<PositioningMessage> outputEvents;
+    private UnicastProcessor<GameMessage> eventPublisher;
+    private Flux<GameMessage> outputEvents;
 
     public Room() {
         name = UUID.randomUUID().toString();
@@ -34,7 +37,10 @@ public class Room {
         this.eventPublisher = UnicastProcessor.create();
         this.outputEvents = eventPublisher
                 .replay(25)
-                .autoConnect();
+                .autoConnect()
+//        .skipWhile(x ->
+//                players.size() < MAX_CONNECTIONS)
+        ;
         this.messageSubscriber = new WebSocketMessageSubscriber(eventPublisher);
     }
 
@@ -44,7 +50,7 @@ public class Room {
     }
 
     public void startGame() {
-
+        outputEvents = outputEvents.concatWith(Mono.just(new GameStartMessage()));
     }
 
     public boolean isEmpty() {
