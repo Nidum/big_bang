@@ -7,6 +7,6 @@ import lombok.Data;
  * Created by Emiliia Nesterovych on 8/21/2018.
  */
 @Data
-public class UserMessage extends GameMessage {
+public abstract class UserMessage extends GameMessage {
     protected GamePlayer gamePlayer;
 }

@@ -2,6 +2,7 @@ package eleks.mentorship.bigbang.gameplay;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eleks.mentorship.bigbang.config.SystemConfig;
 import eleks.mentorship.bigbang.websocket.Room;
 import eleks.mentorship.bigbang.websocket.message.PositioningMessage;
 import lombok.AllArgsConstructor;
@@ -19,9 +20,8 @@ import java.time.Duration;
 @Component
 @AllArgsConstructor
 public class GameEngine {
-    @Inject
     private ObjectMapper objectMapper;
-    private static final int EXPLOSION_DELAY = 1; // In seconds.
+    private static final int EXPLOSION_DELAY = 5; // In seconds.
 
     public Flux<WebSocketMessage> handle(Room room, WebSocketSession session, PositioningMessage message) {
         switch (message.getType()) {

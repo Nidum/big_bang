@@ -1,6 +1,5 @@
 package eleks.mentorship.bigbang.websocket.message;
 
-import eleks.mentorship.bigbang.gameplay.GamePlayer;
 import lombok.Data;
 
 /**
