@@ -20,6 +20,8 @@ public class Room {
     private Set<WebSocketSession> players;
     private GameEngine engine;
 
+    private boolean gameStarted = false;
+
     public Room(JsonMessageMapper mapper, MessageAggregator aggregator) {
         name = UUID.randomUUID().toString();
         players = new HashSet<>();

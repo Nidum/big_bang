@@ -39,10 +39,12 @@ public class RoomManager {
     }
 
     private Room findFreeRoom() {
-        return rooms.stream().filter(r -> !r.isFilled()).findFirst().orElseGet(() -> {
-            Room newRoom = new Room(mapper, aggregator);
-            rooms.add(newRoom);
-            return newRoom;
-        });
+        return rooms.stream()
+                .filter(r -> !r.isFilled() && !r.isGameStarted())
+                .findFirst().orElseGet(() -> {
+                    Room newRoom = new Room(mapper, aggregator);
+                    rooms.add(newRoom);
+                    return newRoom;
+                });
     }
 }
