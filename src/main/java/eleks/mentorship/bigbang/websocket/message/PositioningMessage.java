@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
 /**
  * Created by Emiliia Nesterovych on 7/8/2018.
  */
-@AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class PositioningMessage extends UserMessage {
-    private Position position;
-    private PositioningMessageType type;
+public abstract class PositioningMessage extends UserMessage {
+    protected Position position;
 }

@@ -1,6 +1,6 @@
 package eleks.mentorship.bigbang.websocket;
 
-import eleks.mentorship.bigbang.mapper.JsonEventMapper;
+import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketSession;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class RoomManager {
     private List<Room> rooms = new ArrayList<>();
     @Inject
-    private JsonEventMapper mapper;
+    private JsonMessageMapper mapper;
 
     public void cleanEmptyRooms() {
         for (Room room : rooms) {
@@ -34,8 +34,7 @@ public class RoomManager {
 
     private Room findFreeRoom() {
         return rooms.stream().filter(r -> !r.isFilled()).findFirst().orElseGet(() -> {
-            Room newRoom = new Room();
-            newRoom.setMapper(mapper);
+            Room newRoom = new Room(mapper);
             rooms.add(newRoom);
             return newRoom;
         });
