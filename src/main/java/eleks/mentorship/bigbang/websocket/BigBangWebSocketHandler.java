@@ -14,7 +14,7 @@ public class BigBangWebSocketHandler implements WebSocketHandler {
     @Override
     public Mono<Void> handle(WebSocketSession session) {
         Room room = roomManager.assignUserToRoom(session);
-        return session.send(room.getEngine().getOutputEvents(session));
+        return session.send(room.getEngine().getGameFlow(session));
     }
 
 }

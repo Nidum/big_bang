@@ -1,6 +1,7 @@
 package eleks.mentorship.bigbang.websocket.message;
 
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
+import eleks.mentorship.bigbang.util.Position;
 import lombok.Data;
 
 /**
@@ -9,4 +10,5 @@ import lombok.Data;
 @Data
 public abstract class UserMessage implements GameMessage {
     protected GamePlayer gamePlayer;
+    protected Position position;
 }

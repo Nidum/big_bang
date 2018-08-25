@@ -28,6 +28,14 @@ public class JsonMessageMapper {
         }
     }
 
+    public UserMessage toUserMessage(String json) {
+        try {
+            return mapper.readValue(json, UserMessage.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Invalid JSON:" + json, e);
+        }
+    }
+
     public String toJSON(GameMessage message) {
         try {
             return mapper.writeValueAsString(message);

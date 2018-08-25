@@ -20,14 +20,14 @@ public class Room {
     private Set<WebSocketSession> players;
     private GameEngine engine;
 
-    public Room(JsonMessageMapper mapper) {
+    public Room(JsonMessageMapper mapper, MessageAggregator aggregator) {
         name = UUID.randomUUID().toString();
         players = new HashSet<>();
-        engine = new GameEngine(mapper, new WebSocketMessageSubscriber());
+        engine = new GameEngine(mapper, new WebSocketMessageSubscriber(), aggregator);
     }
 
-    public Room(JsonMessageMapper mapper, String name) {
-        this(mapper);
+    public Room(JsonMessageMapper mapper, MessageAggregator aggregator, String name) {
+        this(mapper, aggregator);
         this.name = name;
     }
 

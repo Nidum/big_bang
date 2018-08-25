@@ -1,6 +1,6 @@
 package eleks.mentorship.bigbang.config;
 
-import eleks.mentorship.bigbang.websocket.message.PositioningMessage;
+import eleks.mentorship.bigbang.websocket.message.UserMessage;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Flux;
@@ -11,20 +11,14 @@ import reactor.core.publisher.UnicastProcessor;
  */
 @Configuration
 public class BeanConfig {
-//    @Bean
-//    public ObjectMapper objectMapper() {
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
-//        return objectMapper;
-//    }
 
     @Bean
-    public UnicastProcessor<PositioningMessage> eventPublisher(){
+    public UnicastProcessor<UserMessage> eventPublisher(){
         return UnicastProcessor.create();
     }
 
     @Bean
-    public Flux<PositioningMessage> events(UnicastProcessor<PositioningMessage> eventPublisher) {
+    public Flux<UserMessage> events(UnicastProcessor<UserMessage> eventPublisher) {
         return eventPublisher
                 .replay(25)
                 .autoConnect();

@@ -8,7 +8,7 @@ public enum GameFieldCell {
     DESTROYABLE_BLOCK('d'),
     STATIC_BLOCK('b'),
     SPAWN('s'),
-
+    // TODO: add buffs
     ;
 
     private char fileChar;
@@ -19,7 +19,7 @@ public enum GameFieldCell {
 
     public static GameFieldCell getByChar(char c) {
         for (GameFieldCell gameFieldCell : values()) {
-            if(gameFieldCell.fileChar == c){
+            if (gameFieldCell.fileChar == c) {
                 return gameFieldCell;
             }
         }
