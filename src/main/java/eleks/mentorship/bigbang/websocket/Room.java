@@ -42,6 +42,9 @@ public class Room {
     }
 
     public void addPlayer(WebSocketSession session) {
+        if(players.isEmpty()){
+            engine.prepareToGame();
+        }
         players.add(session);
         engine.subscribePlayer(session);
     }
