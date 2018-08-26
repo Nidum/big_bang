@@ -33,6 +33,7 @@ dependencies {
 
 	compile group: 'javax.inject', name: 'javax.inject', version: '1'
 	compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.6'
+	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
 
 	compile ('org.projectlombok:lombok')
 

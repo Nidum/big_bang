@@ -1,5 +1,6 @@
 package eleks.mentorship.bigbang.gameplay;
 
+import lombok.Data;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.BufferedReader;
@@ -9,10 +10,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+@Data
 public class GameField {
     private List<List<GameFieldCell>> gameField;
-
+    private List<List<Boolean>> bombs;
     /**
      * Reads gamefield description from some file.
      *
@@ -31,13 +34,19 @@ public class GameField {
             reader = new BufferedReader(new FileReader(file));
             String line = reader.readLine();
             gameField = new ArrayList<>();
+            bombs = new ArrayList<>();
+
             while (line != null) {
                 List<GameFieldCell> row = line.chars()
                         .mapToObj(c -> (char) c)
                         .map(GameFieldCell::getByChar)
                         .collect(Collectors.toList());
+                int size = row.size();
+                bombs.add(IntStream.range(0, size).mapToObj(x->false).collect(Collectors.toList()));
+
                 line = reader.readLine();
                 gameField.add(row);
+
             }
 
             //TODO: Validate field sizes (each width same for all rows).
@@ -55,7 +64,4 @@ public class GameField {
         return gameField.size();
     }
 
-    public List<List<GameFieldCell>> getGameField() {
-        return gameField;
-    }
 }

@@ -25,7 +25,7 @@ public class Room {
     public Room(JsonMessageMapper mapper, MessageAggregator aggregator) {
         name = UUID.randomUUID().toString();
         players = new HashSet<>();
-        engine = new GameEngine(mapper, new WebSocketMessageSubscriber(), aggregator);
+        engine = new GameEngine(mapper, aggregator);
     }
 
     public Room(JsonMessageMapper mapper, MessageAggregator aggregator, String name) {
