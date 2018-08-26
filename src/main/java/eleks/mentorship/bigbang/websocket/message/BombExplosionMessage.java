@@ -5,12 +5,19 @@ import eleks.mentorship.bigbang.util.Position;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * Created by Emiliia Nesterovych on 8/25/2018.
  */
 @Data
-@AllArgsConstructor
 public class BombExplosionMessage extends GameMessage {
     protected GamePlayer owner;
     protected Position position;
+    List<GamePlayer> damaged;
+
+    public BombExplosionMessage(GamePlayer owner, Position position) {
+        this.owner = owner;
+        this.position = position;
+    }
 }

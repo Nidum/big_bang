@@ -31,7 +31,7 @@ public class MessageAggregator {
      * @return Current game state.
      */
     public Flux<GameMessage> aggregate(List<UserMessage> messages, GameState oldState) {
-        messages.sort(Comparator.comparing(UserMessage::getOccurence));
+        messages.sort(Comparator.comparing(UserMessage::getOccurrence));
         Map<String, Pair<GamePlayer, LocalDateTime>> playersMovesTime = oldState.getPlayersMovesTime();
 
         Flux<GameMessage> result = Flux.empty();
@@ -43,9 +43,9 @@ public class MessageAggregator {
 
             if (message instanceof MoveMessage) {
                 LocalDateTime lastPlayersMove = pair.getRight();
-                long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurence());
+                long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurrence());
                 if (timeBetween >= MOVE_DELTA && isCellAvailable(message, player, oldState)) {
-                    pair.setValue(message.getOccurence());
+                    pair.setValue(message.getOccurrence());
                     Position oldPosition = player.getPosition();
                     oldPosition.setX(message.getPosition().getX());
                     oldPosition.setY(message.getPosition().getY());

@@ -1,16 +1,17 @@
 package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.common.exception.UserMissingException;
-import eleks.mentorship.bigbang.gameplay.GameField;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
+import eleks.mentorship.bigbang.util.Position;
 import eleks.mentorship.bigbang.websocket.message.*;
 import lombok.Data;
-import org.apache.commons.lang3.tuple.Pair;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+
 /**
  * Created by Emiliia Nesterovych on 8/24/2018.
  */
@@ -25,13 +26,12 @@ public class WebSocketMessageSubscriber {
         this.eventPublisher = UnicastProcessor.create();
         this.currentGameState = gameState;
         // TODO: move it out of here.
-        // TODO: decrease HP of players in explosion range.
         this.outputEvents = eventPublisher
                 .replay()
                 .autoConnect()
                 .filter(x -> x instanceof UserMessage)
                 .map(x -> {
-                    x.setOccurence(LocalDateTime.now());
+                    x.setOccurrence(LocalDateTime.now());
                     return (UserMessage) x;
                 })
                 .buffer(Duration.ofSeconds(2))
@@ -46,7 +46,12 @@ public class WebSocketMessageSubscriber {
                                 .findFirst()
                                 .orElseThrow(UserMissingException::new);
                         fieldPlayer.setBombsLeft(fieldPlayer.getBombsLeft() + 1);
-                        gameState.getGameField().getBombs().get(bombMsg.getPosition().getX()).set(bombMsg.getPosition().getY(), false);
+
+                        Position bombPosition = bombMsg.getPosition();
+                        // TODO: decrease HP of players in explosion range.
+
+                        gameState.getPlayers().stream().map(GamePlayer::getPosition).collect(Collectors.toList());
+                        gameState.getGameField().getBombs().get(bombPosition.getX()).set(bombPosition.getY(), false);
                     }
                 });
         // TODO: respect explosion messages on game state

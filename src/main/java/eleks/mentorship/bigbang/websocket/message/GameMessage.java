@@ -22,5 +22,5 @@ import java.time.LocalDateTime;
 })
 @Data
 public abstract class GameMessage {
-    protected LocalDateTime occurence;
+    protected LocalDateTime occurrence;
 }
