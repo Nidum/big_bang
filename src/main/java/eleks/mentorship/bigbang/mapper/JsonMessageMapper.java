@@ -6,7 +6,10 @@ import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import eleks.mentorship.bigbang.websocket.message.UserMessage;
 import org.springframework.stereotype.Component;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Emiliia Nesterovych on 8/20/2018.
@@ -17,15 +20,6 @@ public class JsonMessageMapper {
 
     public JsonMessageMapper() {
         mapper = new ObjectMapper();
-        mapper.enableDefaultTyping();
-    }
-
-    public GameMessage toMessage(String json) {
-        try {
-            return mapper.readValue(json, UserMessage.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Invalid JSON:" + json, e);
-        }
     }
 
     public UserMessage toUserMessage(String json) {
