@@ -124,25 +124,25 @@ public class GameEngine {
 
     public void subscribePlayer(WebSocketSession session, final Map<String, WebSocketSession> players) {
 
-//        session.receive()
-//                .map(WebSocketMessage::getPayloadAsText)
-//                .map(mapper::toUserMessage)
-//                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+        session.receive()
+                .map(WebSocketMessage::getPayloadAsText)
+                .map(mapper::toUserMessage)
+                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
 
-        Flux<UserMessage> userMessageFlux =
-                session.receive()
-                        .doOnNext(System.out::print)
-                        .doOnCancel(()->{
-                            System.out.println("CANCELED");
-                        })
-                        .doOnError((e)->{
-                            System.out.println("ERROR");
-                        })
-                        .map(WebSocketMessage::getPayloadAsText)
-                        .map(mapper::toUserMessage);
+//        Flux<UserMessage> userMessageFlux =
+//                session.receive()
+//                        .doOnNext(System.out::print)
+//                        .doOnCancel(()->{
+//                            System.out.println("CANCELED");
+//                        })
+//                        .doOnError((e)->{
+//                            System.out.println("ERROR");
+//                        })
+//                        .map(WebSocketMessage::getPayloadAsText)
+//                        .map(mapper::toUserMessage);
         //Flux<GameMessage> userMessageFlux1 =
-        userMessageFlux
-                .filter(x -> x instanceof ConnectMessage)
+//        userMessageFlux
+//                .filter(x -> x instanceof ConnectMessage)
 //                .take(1)
 //                .doOnNext(x -> {
 //                    players.put(x.getPlayer().getNickname(), session);
@@ -153,7 +153,7 @@ public class GameEngine {
 //                    currentGameState.getPlayers().add(gamePlayer);
 //                })
 //                .map(x -> (GameMessage) currentGameState);
-                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+//                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
 //        userMessageFlux1.mergeWith(userMessageFlux)
 //                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
 //                .map(x -> {
