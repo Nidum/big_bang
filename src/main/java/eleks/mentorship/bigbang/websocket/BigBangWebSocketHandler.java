@@ -1,10 +1,11 @@
 package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
-import eleks.mentorship.bigbang.websocket.message.GameState;
 import lombok.AllArgsConstructor;
+import org.reactivestreams.Publisher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
+import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 
@@ -17,11 +18,8 @@ public class BigBangWebSocketHandler implements WebSocketHandler {
     @Override
     public Mono<Void> handle(WebSocketSession session) {
         Room room = roomManager.assignUserToRoom(session);
-        GameState currentGameState = room.getEngine().getCurrentGameState();
-        return session.send(Mono.just(currentGameState)
-                .map(x -> mapper.toJSON(x))
-                .map(session::textMessage)
-                .concatWith(room.getEngine().getGameFlow(session)));
+        Publisher<WebSocketMessage> gameFlow = room.getEngine().getGameFlow(session);
+        return session.send(gameFlow);
     }
 
 }

@@ -6,23 +6,22 @@ import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
 import eleks.mentorship.bigbang.util.Position;
 import eleks.mentorship.bigbang.websocket.MessageAggregator;
 import eleks.mentorship.bigbang.websocket.WebSocketMessageSubscriber;
-import eleks.mentorship.bigbang.websocket.message.BombExplosionMessage;
-import eleks.mentorship.bigbang.websocket.message.GameState;
-import eleks.mentorship.bigbang.websocket.message.NewPlayerMessage;
-import eleks.mentorship.bigbang.websocket.message.UserMessage;
+import eleks.mentorship.bigbang.websocket.message.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.reactivestreams.Publisher;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -123,22 +122,69 @@ public class GameEngine {
         return res;
     }
 
-    public void subscribePlayer(WebSocketSession session) {
-//        session.send(Mono.just(currentGameState)
-//                .map(x->mapper.toJSON(x))
-//                .map(session::textMessage));
-        session.receive()
-                .map(WebSocketMessage::getPayloadAsText)
-                .map(mapper::toUserMessage)
-                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+    public void subscribePlayer(WebSocketSession session, final Map<String, WebSocketSession> players) {
 
+//        session.receive()
+//                .map(WebSocketMessage::getPayloadAsText)
+//                .map(mapper::toUserMessage)
+//                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+
+        Flux<UserMessage> userMessageFlux =
+                session.receive()
+                        .doOnNext(System.out::print)
+                        .doOnCancel(()->{
+                            System.out.println("CANCELED");
+                        })
+                        .doOnError((e)->{
+                            System.out.println("ERROR");
+                        })
+                        .map(WebSocketMessage::getPayloadAsText)
+                        .map(mapper::toUserMessage);
+        //Flux<GameMessage> userMessageFlux1 =
+        userMessageFlux
+                .filter(x -> x instanceof ConnectMessage)
+//                .take(1)
+//                .doOnNext(x -> {
+//                    players.put(x.getPlayer().getNickname(), session);
+//                    GamePlayer gamePlayer = new GamePlayer(x.getPlayer());
+//                    currentGameState.getPlayersMovesTime().put(x.getPlayer().getNickname(),
+//                            MutablePair.of(gamePlayer, LocalDateTime.now()));
+////                    //TODO: inject position.
+//                    currentGameState.getPlayers().add(gamePlayer);
+//                })
+//                .map(x -> (GameMessage) currentGameState);
+                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+//        userMessageFlux1.mergeWith(userMessageFlux)
+//                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+//                .map(x -> {
+//                    players.put(x.getPlayer().getNickname(), session);
+//                    GamePlayer gamePlayer = new GamePlayer(x.getPlayer());
+//                    currentGameState.getPlayersMovesTime().put(x.getPlayer().getNickname(),
+//                            MutablePair.of(gamePlayer, LocalDateTime.now()));
+////                    //TODO: inject position.
+//                    currentGameState.getPlayers().add(gamePlayer);
+//                    return (GameMessage) currentGameState;
+//                })
+//                .mergeWith(
+//                        userMessageFlux
+//                )
+//                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+        //.thenMany(skip);
+        //skip.subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+//        GameMessage msg = currentGameState;
+//        userFlux
+        //.cast(GameMessage.class).startWith(Mono.just(msg).delaySubscription(connectionMessage))
+        //.filter(x->!(x instanceof ConnectMessage))
+        //        userFlux.subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+        //.map(x -> mapper.toJSON(x))
+        // .map(session::textMessage)
+        ;
 
         GamePlayer gamePlayer = new GamePlayer(
-                new Player(UUID.randomUUID(), "BOOMer")
-                , new Position(0, 1));
+                new Player(UUID.randomUUID(), "LOL")
+                , new Position(0, 0));
         currentGameState.getPlayersMovesTime().put(gamePlayer.getPlayer().getNickname(), MutablePair.of(gamePlayer, LocalDateTime.now()));
         currentGameState.getPlayers().add(gamePlayer);
-        messageSubscriber.onNext(new NewPlayerMessage(gamePlayer.getPlayer())); //TODO: add to new player message player info.
     }
 
     public Publisher<WebSocketMessage> getGameFlow(WebSocketSession session) {

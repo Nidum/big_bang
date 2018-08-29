@@ -12,13 +12,14 @@ import java.util.List;
  */
 @Component
 public class RoomManager {
-    private List<Room> rooms = new ArrayList<>();
+    private List<Room> rooms;
     private JsonMessageMapper mapper;
     private MessageAggregator aggregator;
 
     public RoomManager(JsonMessageMapper mapper, MessageAggregator aggregator) {
         this.mapper = mapper;
         this.aggregator = aggregator;
+        this.rooms = new ArrayList<>();
     }
 
     public void cleanEmptyRooms() {

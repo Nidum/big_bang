@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
         @JsonSubTypes.Type(value = BombPlacementMessage.class, name = "bomb"),
         @JsonSubTypes.Type(value = GameState.class, name = "state"),
         @JsonSubTypes.Type(value = BombExplosionMessage.class, name = "explosion"),
+        @JsonSubTypes.Type(value = ConnectMessage.class, name = "connect"),
 })
 @Data
 public abstract class GameMessage {

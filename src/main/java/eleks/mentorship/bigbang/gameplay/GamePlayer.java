@@ -19,6 +19,11 @@ public class GamePlayer {
     private Integer bombsDelayMultiplier = 1;
     private Position position;
 
+    public GamePlayer(Player player) {
+        this.player = player;
+        position = new Position(0, 0);
+    }
+
     public GamePlayer(Player player, Position startPosition) {
         this.player = player;
         position = startPosition;

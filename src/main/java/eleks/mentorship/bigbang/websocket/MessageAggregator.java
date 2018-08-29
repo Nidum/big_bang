@@ -14,6 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by Emiliia Nesterovych on 8/24/2018.
@@ -38,7 +39,9 @@ public class MessageAggregator {
 
         for (UserMessage message : messages) {
             String nickname = message.getPlayer().getNickname();
-            Pair<GamePlayer, LocalDateTime> pair = playersMovesTime.get(nickname);
+            Optional<Pair<GamePlayer, LocalDateTime>> optionalPair = Optional.ofNullable(playersMovesTime.get(nickname));
+            if(!optionalPair.isPresent()) continue;
+            Pair<GamePlayer, LocalDateTime> pair = optionalPair.get();
             GamePlayer player = pair.getLeft();
 
             if (message instanceof MoveMessage) {
