@@ -13,11 +13,9 @@ import eleks.mentorship.bigbang.websocket.message.UserMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.reactivestreams.Publisher;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -25,8 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -128,9 +124,9 @@ public class GameEngine {
     }
 
     public void subscribePlayer(WebSocketSession session) {
-        session.send(Mono.just(currentGameState)
-                .map(x->mapper.toJSON(x))
-                .map(session::textMessage));
+//        session.send(Mono.just(currentGameState)
+//                .map(x->mapper.toJSON(x))
+//                .map(session::textMessage));
         session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .map(mapper::toUserMessage)

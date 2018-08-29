@@ -37,7 +37,7 @@ public class MessageAggregator {
         Flux<GameMessage> result = Flux.empty();
 
         for (UserMessage message : messages) {
-            String nickname = message.getGamePlayer().getPlayer().getNickname();
+            String nickname = message.getPlayer().getNickname();
             Pair<GamePlayer, LocalDateTime> pair = playersMovesTime.get(nickname);
             GamePlayer player = pair.getLeft();
 

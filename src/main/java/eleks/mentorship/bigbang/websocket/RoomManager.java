@@ -1,11 +1,9 @@
 package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
-import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketSession;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
