@@ -1,13 +1,16 @@
 package eleks.mentorship.bigbang.websocket.message;
 
 import eleks.mentorship.bigbang.Player;
-import org.apache.commons.lang3.tuple.Pair;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Emiliia Nesterovych on 8/30/2018.
  */
+@Data
+@AllArgsConstructor
 public class RoomStateMessage extends GameMessage {
-    private List<Pair<Player, Boolean>> playerList;
+    private Map<Player, Boolean> playerList;
 }

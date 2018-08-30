@@ -31,13 +31,13 @@ public class MessageAggregator {
      * @param messages Messages to be aggregated.
      * @return Current game state.
      */
-    public Flux<GameMessage> aggregate(List<UserMessage> messages, GameState oldState) {
+    public Flux<GameMessage> aggregate(List<PositioningMessage> messages, GameState oldState) {
         messages.sort(Comparator.comparing(UserMessage::getOccurrence));
         Map<String, Pair<GamePlayer, LocalDateTime>> playersMovesTime = oldState.getPlayersMovesTime();
 
         Flux<GameMessage> result = Flux.empty();
 
-        for (UserMessage message : messages) {
+        for (PositioningMessage message : messages) {
             String nickname = message.getPlayer().getNickname();
             Optional<Pair<GamePlayer, LocalDateTime>> optionalPair = Optional.ofNullable(playersMovesTime.get(nickname));
             if(!optionalPair.isPresent()) continue;
@@ -81,7 +81,7 @@ public class MessageAggregator {
      * @param oldState Last known state of game.
      * @return True if all checks passed, false otherwise.
      */
-    private boolean isCellAvailable(UserMessage message, GamePlayer player, GameState oldState) {
+    private boolean isCellAvailable(PositioningMessage message, GamePlayer player, GameState oldState) {
         Position oldPosition = player.getPosition();
         Position newPosition = message.getPosition();
         int xStepDelta = oldPosition.getX() - newPosition.getX();
@@ -105,7 +105,7 @@ public class MessageAggregator {
         return !oldState.getGameField().getBombs().get(newPosition.getX()).get(newPosition.getY());
     }
 
-    private boolean isPlayerOnCell(UserMessage message, GamePlayer player, GameState oldState) {
+    private boolean isPlayerOnCell(PositioningMessage message, GamePlayer player, GameState oldState) {
         return oldState.getPlayers().stream()
                 .filter(p -> !p.getPlayer().getNickname().equals(player.getPlayer().getNickname()))
                 .map(GamePlayer::getPosition)

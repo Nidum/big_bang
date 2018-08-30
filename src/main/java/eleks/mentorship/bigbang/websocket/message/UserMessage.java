@@ -11,5 +11,4 @@ import lombok.Data;
 @Data
 public abstract class UserMessage extends GameMessage {
     protected Player player;
-    protected Position position;
 }
