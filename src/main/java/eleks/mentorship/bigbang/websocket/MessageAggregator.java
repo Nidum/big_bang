@@ -2,7 +2,13 @@ package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
 import eleks.mentorship.bigbang.util.Position;
-import eleks.mentorship.bigbang.websocket.message.*;
+import eleks.mentorship.bigbang.websocket.message.GameMessage;
+import eleks.mentorship.bigbang.websocket.message.server.BombExplosionMessage;
+import eleks.mentorship.bigbang.websocket.message.server.GameState;
+import eleks.mentorship.bigbang.websocket.message.user.BombPlacementMessage;
+import eleks.mentorship.bigbang.websocket.message.user.MoveMessage;
+import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
+import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -63,7 +69,9 @@ public class MessageAggregator {
                     oldState.getGameField().getBombs().get(position.getX()).set(position.getY(), true);
                     BombExplosionMessage explosionMessage = new BombExplosionMessage(player, position);
                     Flux<GameMessage> flux = Flux.just(oldState);
-                    result = result.concatWith(flux.mergeWith(Mono.just(explosionMessage).delayElement(Duration.ofSeconds(EXPLOSION_DELAY))));
+                    result = result
+                            .concatWith(flux.mergeWith(Mono.just(explosionMessage)
+                            .delayElement(Duration.ofSeconds(EXPLOSION_DELAY))));
                 }
             }
         }

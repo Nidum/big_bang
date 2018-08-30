@@ -1,8 +1,5 @@
 package eleks.mentorship.bigbang.common.exception;
 
-/**
- * Created by Emiliia Nesterovych on 8/25/2018.
- */
 public class UnsupportedMessageTypeException extends RuntimeException {
     public UnsupportedMessageTypeException() {
     }

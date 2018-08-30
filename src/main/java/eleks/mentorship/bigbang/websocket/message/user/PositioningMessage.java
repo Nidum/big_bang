@@ -1,4 +1,4 @@
-package eleks.mentorship.bigbang.websocket.message;
+package eleks.mentorship.bigbang.websocket.message.user;
 
 import eleks.mentorship.bigbang.util.Position;
 import lombok.Data;

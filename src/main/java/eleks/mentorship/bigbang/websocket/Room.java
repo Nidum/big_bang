@@ -5,14 +5,16 @@ import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
 import lombok.Data;
 import org.springframework.web.reactive.socket.WebSocketSession;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created by Emiliia Nesterovych on 7/15/2018.
  */
 @Data
 public class Room {
-    private static final int MAX_CONNECTIONS = 2;
+    public static final int MAX_CONNECTIONS = 2;
 
     private String name;
     private Map<String, WebSocketSession> players;
@@ -39,9 +41,9 @@ public class Room {
         return players.size() == MAX_CONNECTIONS;
     }
 
-    public void addPlayer(WebSocketSession session) {
+    public void registerPlayer(WebSocketSession session) {
         if(players.isEmpty()){
-            engine.prepareToGame();
+            engine.buildGamePlay();
         }
         engine.subscribePlayer(session, players);
     }

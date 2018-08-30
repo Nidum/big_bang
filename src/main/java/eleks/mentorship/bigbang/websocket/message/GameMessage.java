@@ -3,6 +3,11 @@ package eleks.mentorship.bigbang.websocket.message;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import eleks.mentorship.bigbang.websocket.message.server.*;
+import eleks.mentorship.bigbang.websocket.message.user.BombPlacementMessage;
+import eleks.mentorship.bigbang.websocket.message.user.ConnectMessage;
+import eleks.mentorship.bigbang.websocket.message.user.MoveMessage;
+import eleks.mentorship.bigbang.websocket.message.user.ReadyMessage;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -21,6 +26,7 @@ import java.time.LocalDateTime;
         @JsonSubTypes.Type(value = BombExplosionMessage.class, name = "explosion"),
         @JsonSubTypes.Type(value = ConnectMessage.class, name = "connect"),
         @JsonSubTypes.Type(value = RoomStateMessage.class, name = "room"),
+        @JsonSubTypes.Type(value = StartCounterMessage.class, name = "start_counter"),
 })
 @Data
 public abstract class GameMessage {

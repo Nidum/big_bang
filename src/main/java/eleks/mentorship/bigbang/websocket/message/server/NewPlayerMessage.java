@@ -1,6 +1,7 @@
-package eleks.mentorship.bigbang.websocket.message;
+package eleks.mentorship.bigbang.websocket.message.server;
 
 import eleks.mentorship.bigbang.Player;
+import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

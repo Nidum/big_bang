@@ -6,7 +6,15 @@ import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
 import eleks.mentorship.bigbang.util.Position;
 import eleks.mentorship.bigbang.websocket.MessageAggregator;
 import eleks.mentorship.bigbang.websocket.WebSocketMessageSubscriber;
-import eleks.mentorship.bigbang.websocket.message.*;
+import eleks.mentorship.bigbang.websocket.message.GameMessage;
+import eleks.mentorship.bigbang.websocket.message.server.BombExplosionMessage;
+import eleks.mentorship.bigbang.websocket.message.server.GameState;
+import eleks.mentorship.bigbang.websocket.message.server.RoomStateMessage;
+import eleks.mentorship.bigbang.websocket.message.server.StartCounterMessage;
+import eleks.mentorship.bigbang.websocket.message.user.ConnectMessage;
+import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
+import eleks.mentorship.bigbang.websocket.message.user.ReadyMessage;
+import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -23,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static eleks.mentorship.bigbang.websocket.Room.MAX_CONNECTIONS;
 
 /**
  * Created by Emiliia Nesterovych on 7/10/2018.
@@ -48,59 +58,23 @@ public class GameEngine {
         playerReady = new HashMap<>();
     }
 
-    public void prepareToGame() {
+    public void buildGamePlay() {
         Flux<GameMessage> cache = messageSubscriber.getOutputEvents().cache();
         messageSubscriber.setOutputEvents(cache
-                .filter(x -> !(x instanceof PositioningMessage))
+                .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage))
                 .doOnNext(msg -> {
                     if (msg instanceof BombExplosionMessage) {
-                        BombExplosionMessage bombMsg = (BombExplosionMessage) msg;
-                        GamePlayer gamePlayer = bombMsg.getOwner();
-                        GamePlayer fieldPlayer = currentGameState.getPlayers().stream()
-                                .filter(x -> x.getPlayer().getNickname().equals(gamePlayer.getPlayer().getNickname()))
-                                .findFirst()
-                                .orElseThrow(UserMissingException::new);
-                        fieldPlayer.setBombsLeft(fieldPlayer.getBombsLeft() + 1);
-                        GameField gameField = currentGameState.getGameField();
-                        int width = gameField.getWidth();
-                        int height = gameField.getHeight();
-
-                        Position bombPosition = bombMsg.getPosition();
-                        // TODO: decrease HP of players in explosion range.
-
-                        int leftX = getRange(bombPosition.getX(),
-                                (i) -> (i > 0 && i > bombPosition.getX() - EXPLOSION_RADIUS),
-                                gameField, true, -1);
-                        int rightX = getRange(bombPosition.getX(),
-                                (i) -> (i < width && i < bombPosition.getX() + EXPLOSION_RADIUS),
-                                gameField, true, 1);
-                        int leftY = getRange(bombPosition.getY(),
-                                (i) -> (i > 0 && i > bombPosition.getY() - EXPLOSION_RADIUS),
-                                gameField, false, -1);
-                        int rightY = getRange(bombPosition.getY(),
-                                (i) -> (i < height && i < bombPosition.getY() + EXPLOSION_RADIUS),
-                                gameField, false, 1);
-
-                        List<GamePlayer> damagedPlayers = currentGameState.getPlayers().stream()
-                                .filter(player -> {
-                                    Position position = player.getPosition();
-                                    return (position.getX() >= leftX && position.getX() <= rightX) ||
-                                            (position.getY() >= leftY && position.getY() <= rightY);
-                                })
-                                .collect(Collectors.toList());
-                        gameField.getBombs().get(bombPosition.getX()).set(bombPosition.getY(), false);
-                        currentGameState.getPlayers().stream().filter(damagedPlayers::contains).forEach(
-                                p -> {
-                                    p.setLivesLeft(p.getLivesLeft() - 1);
-                                }
-                        );
-                        bombMsg.setDamaged(damagedPlayers);
+                        onBombExplosion((BombExplosionMessage) msg);
                     }
                 })
                 .map(msg -> {
                     if (msg instanceof ReadyMessage) {
                         playerReady.put(((ReadyMessage) msg).getPlayer(), true);
-                        new RoomStateMessage(playerReady);
+                        if (playerReady.size() == MAX_CONNECTIONS) {
+                            new StartCounterMessage();
+                        } else {
+                            new RoomStateMessage(playerReady);
+                        }
                     }
                     return msg;
                 })
@@ -113,7 +87,52 @@ public class GameEngine {
                         .buffer(Duration.ofSeconds(2))
                         .flatMap(messages ->
                                 aggregator.aggregate(messages, currentGameState))
-                )); // TODO: ignore messages from dead players.
+                )
+                .mergeWith(cache
+                        .filter(x -> x instanceof StartCounterMessage))); // TODO: ignore messages from dead players.
+    }
+
+    private void onBombExplosion(BombExplosionMessage explosionMessage) {
+        GamePlayer gamePlayer = explosionMessage.getOwner();
+        GamePlayer fieldPlayer = currentGameState.getPlayers().stream()
+                .filter(x -> x.getPlayer().getNickname().equals(gamePlayer.getPlayer().getNickname()))
+                .findFirst()
+                .orElseThrow(UserMissingException::new);
+        fieldPlayer.setBombsLeft(fieldPlayer.getBombsLeft() + 1);
+        GameField gameField = currentGameState.getGameField();
+        int width = gameField.getWidth();
+        int height = gameField.getHeight();
+
+        Position bombPosition = explosionMessage.getPosition();
+        // TODO: decrease HP of players in explosion range.
+
+        int leftX = getRange(bombPosition.getX(),
+                (i) -> (i > 0 && i > bombPosition.getX() - EXPLOSION_RADIUS),
+                gameField, true, -1);
+        int rightX = getRange(bombPosition.getX(),
+                (i) -> (i < width && i < bombPosition.getX() + EXPLOSION_RADIUS),
+                gameField, true, 1);
+        int leftY = getRange(bombPosition.getY(),
+                (i) -> (i > 0 && i > bombPosition.getY() - EXPLOSION_RADIUS),
+                gameField, false, -1);
+        int rightY = getRange(bombPosition.getY(),
+                (i) -> (i < height && i < bombPosition.getY() + EXPLOSION_RADIUS),
+                gameField, false, 1);
+
+        List<GamePlayer> damagedPlayers = currentGameState.getPlayers().stream()
+                .filter(player -> {
+                    Position position = player.getPosition();
+                    return (position.getX() >= leftX && position.getX() <= rightX) ||
+                            (position.getY() >= leftY && position.getY() <= rightY);
+                })
+                .collect(Collectors.toList());
+        gameField.getBombs().get(bombPosition.getX()).set(bombPosition.getY(), false);
+        currentGameState.getPlayers().stream().filter(damagedPlayers::contains).forEach(
+                p -> {
+                    p.setLivesLeft(p.getLivesLeft() - 1);
+                }
+        );
+        explosionMessage.setDamaged(damagedPlayers);
     }
 
     private int getRange(int position, Predicate<Integer> range, GameField gameField, boolean isHorizontal, int step) {
@@ -145,18 +164,22 @@ public class GameEngine {
                 .filter(x -> x instanceof ConnectMessage)
                 .take(1)
                 .doOnNext(x -> {
-                    Player player = x.getPlayer();
-                    players.put(player.getNickname(), session);
-                    GamePlayer gamePlayer = new GamePlayer(player);
-                    currentGameState.getPlayersMovesTime().put(player.getNickname(),
-                            MutablePair.of(gamePlayer, LocalDateTime.now()));
-                    //TODO: inject position.
-                    currentGameState.getPlayers().add(gamePlayer);
-                    playerReady.put(player, false);
+                    registerPlayer(x, session, players);
                 })
                 .map(x -> new RoomStateMessage(playerReady));
         connectionFlux.concatWith(messageFluxCache.skipWhile(x -> x instanceof ConnectMessage))
                 .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+    }
+
+    private void registerPlayer(UserMessage userMessage, WebSocketSession session, final Map<String, WebSocketSession> players) {
+        Player player = userMessage.getPlayer();
+        players.put(player.getNickname(), session);
+        GamePlayer gamePlayer = new GamePlayer(player);
+        currentGameState.getPlayersMovesTime().put(player.getNickname(),
+                MutablePair.of(gamePlayer, LocalDateTime.now()));
+        //TODO: inject position.
+        currentGameState.getPlayers().add(gamePlayer);
+        playerReady.put(player, false);
     }
 
     public Publisher<WebSocketMessage> getGameFlow(WebSocketSession session) {

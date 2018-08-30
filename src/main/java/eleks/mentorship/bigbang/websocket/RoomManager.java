@@ -32,7 +32,7 @@ public class RoomManager {
 
     public Room assignUserToRoom(WebSocketSession session) {
         Room freeRoom = findFreeRoom();
-        freeRoom.addPlayer(session);
+        freeRoom.registerPlayer(session);
 
         return freeRoom;
     }

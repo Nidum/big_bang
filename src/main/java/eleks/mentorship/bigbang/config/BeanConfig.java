@@ -1,6 +1,6 @@
 package eleks.mentorship.bigbang.config;
 
-import eleks.mentorship.bigbang.websocket.message.UserMessage;
+import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Flux;

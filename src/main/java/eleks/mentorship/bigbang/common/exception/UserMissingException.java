@@ -1,8 +1,5 @@
 package eleks.mentorship.bigbang.common.exception;
 
-/**
- * Created by Emiliia Nesterovych on 8/26/2018.
- */
 public class UserMissingException extends RuntimeException {
     public UserMissingException() {
     }

@@ -1,6 +1,6 @@
 package eleks.mentorship.bigbang.websocket;
 
-import eleks.mentorship.bigbang.websocket.message.*;
+import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;

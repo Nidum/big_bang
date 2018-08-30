@@ -3,13 +3,10 @@ package eleks.mentorship.bigbang.mapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
-import eleks.mentorship.bigbang.websocket.message.UserMessage;
+import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import org.springframework.stereotype.Component;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Emiliia Nesterovych on 8/20/2018.
