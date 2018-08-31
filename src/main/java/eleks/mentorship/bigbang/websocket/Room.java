@@ -2,8 +2,11 @@ package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.gameplay.GameEngine;
 import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
+import eleks.mentorship.bigbang.websocket.message.GameMessage;
+import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import lombok.Data;
 import org.springframework.web.reactive.socket.WebSocketSession;
+import reactor.core.publisher.Flux;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,10 +44,10 @@ public class Room {
         return players.size() == MAX_CONNECTIONS;
     }
 
-    public void registerPlayer(WebSocketSession session) {
-        if(players.isEmpty()){
+    public Flux<GameMessage> registerPlayer(Flux<UserMessage> flux, WebSocketSession session) {
+        if (players.isEmpty()) {
             engine.buildGamePlay();
         }
-        engine.subscribePlayer(session, players);
+        return engine.subscribePlayer(flux, session, players);
     }
 }

@@ -19,8 +19,9 @@ public class WebSocketMessageSubscriber {
     public WebSocketMessageSubscriber() {
         this.eventPublisher = UnicastProcessor.create();
         this.outputEvents = eventPublisher
-                .replay()
-                .autoConnect();
+//                .replay()
+//                .autoConnect()
+        ;
     }
 
     public void onNext(GameMessage event) {

@@ -7,10 +7,7 @@ import eleks.mentorship.bigbang.util.Position;
 import eleks.mentorship.bigbang.websocket.MessageAggregator;
 import eleks.mentorship.bigbang.websocket.WebSocketMessageSubscriber;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
-import eleks.mentorship.bigbang.websocket.message.server.BombExplosionMessage;
-import eleks.mentorship.bigbang.websocket.message.server.GameState;
-import eleks.mentorship.bigbang.websocket.message.server.RoomStateMessage;
-import eleks.mentorship.bigbang.websocket.message.server.StartCounterMessage;
+import eleks.mentorship.bigbang.websocket.message.server.*;
 import eleks.mentorship.bigbang.websocket.message.user.ConnectMessage;
 import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
 import eleks.mentorship.bigbang.websocket.message.user.ReadyMessage;
@@ -89,7 +86,9 @@ public class GameEngine {
                                 aggregator.aggregate(messages, currentGameState))
                 )
                 .mergeWith(cache
-                        .filter(x -> x instanceof StartCounterMessage))); // TODO: ignore messages from dead players.
+                        .filter(x -> x instanceof StartCounterMessage)
+                        .delaySubscription(Duration.ofSeconds(3))
+                        .map(x -> new GameStartMessage()))); // TODO: ignore messages from dead players.
     }
 
     private void onBombExplosion(BombExplosionMessage explosionMessage) {
@@ -153,22 +152,19 @@ public class GameEngine {
         return res;
     }
 
-    public void subscribePlayer(WebSocketSession session, final Map<String, WebSocketSession> players) {
-        Flux<UserMessage> messageFluxCache = session
-                .receive()
-                .map(WebSocketMessage::getPayloadAsText)
-                .map(mapper::toUserMessage)
-                .cache();
-
+    public Flux<GameMessage> subscribePlayer(Flux<UserMessage> messageFluxCache, WebSocketSession session, final Map<String, WebSocketSession> players) {
         Flux<GameMessage> connectionFlux = messageFluxCache
-                .filter(x -> x instanceof ConnectMessage)
+                 .filter(x -> x instanceof ConnectMessage)
                 .take(1)
                 .doOnNext(x -> {
                     registerPlayer(x, session, players);
                 })
                 .map(x -> new RoomStateMessage(playerReady));
-        connectionFlux.concatWith(messageFluxCache.skipWhile(x -> x instanceof ConnectMessage))
-                .subscribe(messageSubscriber::onNext, messageSubscriber::onError);
+        return connectionFlux.concatWith(messageFluxCache
+                .skipWhile(x -> x instanceof ConnectMessage)
+                .skipWhile(x -> playerReady.values().contains(false) && playerReady.entrySet().size() != MAX_CONNECTIONS))
+        //        .subscribe(messageSubscriber::onNext, messageSubscriber::onError)
+        ;
     }
 
     private void registerPlayer(UserMessage userMessage, WebSocketSession session, final Map<String, WebSocketSession> players) {

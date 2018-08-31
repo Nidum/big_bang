@@ -30,11 +30,8 @@ public class RoomManager {
         }
     }
 
-    public Room assignUserToRoom(WebSocketSession session) {
-        Room freeRoom = findFreeRoom();
-        freeRoom.registerPlayer(session);
-
-        return freeRoom;
+    public Room assignUserToRoom() {
+        return findFreeRoom();
     }
 
     private Room findFreeRoom() {
