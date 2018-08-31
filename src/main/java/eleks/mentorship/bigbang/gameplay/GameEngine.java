@@ -58,46 +58,50 @@ public class GameEngine {
 
     public void buildGamePlay() {
         Flux<GameMessage> cache = messageSubscriber.getOutputEvents()
-                .cache(1)
-                ;
+                .cache(1);
         messageSubscriber.setOutputEvents(
                 cache.filter(x -> x instanceof ReadyMessage || x instanceof RoomStateMessage)
                         .map(msg -> {
                                     if (msg instanceof ReadyMessage) {
                                         playerReady.put(((ReadyMessage) msg).getPlayer().getNickname(), true);
-                                        if (playerReady.size() == MAX_CONNECTIONS) {
-                                            new StartCounterMessage();
+                                        if (playerReady.size() == MAX_CONNECTIONS && !playerReady.values().contains(false)) {
+                                            return new StartCounterMessage();
                                         } else {
-                                            new RoomStateMessage(playerReady);
+                                            return new RoomStateMessage(playerReady);
                                         }
                                     }
                                     return msg;
                                 }
                         )
+                        .takeWhile(x -> playerReady.size() != MAX_CONNECTIONS || playerReady.values().contains(false))
+                        .doOnComplete(() -> System.out.println("Finito"))
+                        .concatWith(
+                                Mono.just((GameMessage) new StartCounterMessage())
+                                        .concatWith(Mono
+                                                .just((GameMessage) new GameStartMessage())
+                                                .delaySubscription(Duration.ofSeconds(3)))
+//                                .concatWith(
+//                                        cache.filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
+//                                                && !(x instanceof ReadyMessage))
+//                                                .doOnNext(msg -> {
+//                                                    if (msg instanceof BombExplosionMessage) {
+//                                                        onBombExplosion((BombExplosionMessage) msg);
+//                                                    }
+//                                                })
+//                                                .mergeWith(cache
+//                                                        .filter(x -> x instanceof PositioningMessage)
+//                                                        .map(x -> {
+//                                                            x.setOccurrence(LocalDateTime.now());
+//                                                            return (PositioningMessage) x;
+//                                                        })
+//                                                        .buffer(Duration.ofSeconds(2))
+//                                                        .flatMap(messages ->
+//                                                                aggregator.aggregate(messages, currentGameState))
+//                                                )
+//                                )
+                        )
         );
-//
-//        cache
-//                .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
-//                        && !(x instanceof ReadyMessage))
-//                .doOnNext(msg -> {
-//                    if (msg instanceof BombExplosionMessage) {
-//                        onBombExplosion((BombExplosionMessage) msg);
-//                    }
-//                })
-//                .mergeWith(cache
-//                        .filter(x -> x instanceof PositioningMessage)
-//                        .map(x -> {
-//                            x.setOccurrence(LocalDateTime.now());
-//                            return (PositioningMessage) x;
-//                        })
-//                        .buffer(Duration.ofSeconds(2))
-//                        .flatMap(messages ->
-//                                aggregator.aggregate(messages, currentGameState))
-//                )
-//                .mergeWith(cache
-//                        .filter(x -> x instanceof StartCounterMessage)
-//                        .delaySubscription(Duration.ofSeconds(3))
-//                        .map(x -> new GameStartMessage()))); // TODO: ignore messages from dead players.
+        ; // TODO: ignore messages from dead players.
     }
 
     private void onBombExplosion(BombExplosionMessage explosionMessage) {
@@ -168,8 +172,7 @@ public class GameEngine {
                 .doOnNext(x -> {
                     registerPlayer(x, session, players);
                 })
-                .map(x->new RoomStateMessage(playerReady))
-//                .ignoreElements()
+                .map(x -> new RoomStateMessage(playerReady))
                 ;
     }
 
