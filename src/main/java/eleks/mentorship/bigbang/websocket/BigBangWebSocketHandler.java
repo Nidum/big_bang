@@ -37,9 +37,9 @@ public class BigBangWebSocketHandler implements WebSocketHandler {
                 .autoConnect();
         Flux<GameMessage> userConnectionFlux = room.registerPlayer(userMessageFlux, session);
         WebSocketMessageSubscriber eventPublisher = room.getEngine().getMessageSubscriber();
-        userConnectionFlux
-                .subscribe(eventPublisher::onNext, eventPublisher::onError);
         userMessageFlux
+                .subscribe(eventPublisher::onNext, eventPublisher::onError);
+        userConnectionFlux
                 .subscribe(eventPublisher::onNext, eventPublisher::onError);
         Flux<GameMessage> gameFlow = room.getEngine().getGameFlow();
 
