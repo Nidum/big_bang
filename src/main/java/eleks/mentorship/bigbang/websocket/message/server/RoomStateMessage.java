@@ -13,5 +13,5 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 public class RoomStateMessage extends GameMessage {
-    private Map<Player, Boolean> playerList;
+    private Map<String, Boolean> playerList;
 }

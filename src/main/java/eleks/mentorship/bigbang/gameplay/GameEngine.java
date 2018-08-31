@@ -19,6 +19,7 @@ import org.reactivestreams.Publisher;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -44,7 +45,7 @@ public class GameEngine {
     private WebSocketMessageSubscriber messageSubscriber;
     private MessageAggregator aggregator;
     private GameState currentGameState;
-    private Map<Player, Boolean> playerReady;
+    private Map<String, Boolean> playerReady;
 
     // TODO: inject game field (randomly).
     public GameEngine(JsonMessageMapper mapper, MessageAggregator aggregator) {
@@ -56,39 +57,47 @@ public class GameEngine {
     }
 
     public void buildGamePlay() {
-        Flux<GameMessage> cache = messageSubscriber.getOutputEvents().cache();
-        messageSubscriber.setOutputEvents(cache
-                .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage))
-                .doOnNext(msg -> {
-                    if (msg instanceof BombExplosionMessage) {
-                        onBombExplosion((BombExplosionMessage) msg);
-                    }
-                })
-                .map(msg -> {
-                    if (msg instanceof ReadyMessage) {
-                        playerReady.put(((ReadyMessage) msg).getPlayer(), true);
-                        if (playerReady.size() == MAX_CONNECTIONS) {
-                            new StartCounterMessage();
-                        } else {
-                            new RoomStateMessage(playerReady);
-                        }
-                    }
-                    return msg;
-                })
-                .mergeWith(cache
-                        .filter(x -> x instanceof PositioningMessage)
-                        .map(x -> {
-                            x.setOccurrence(LocalDateTime.now());
-                            return (PositioningMessage) x;
-                        })
-                        .buffer(Duration.ofSeconds(2))
-                        .flatMap(messages ->
-                                aggregator.aggregate(messages, currentGameState))
-                )
-                .mergeWith(cache
-                        .filter(x -> x instanceof StartCounterMessage)
-                        .delaySubscription(Duration.ofSeconds(3))
-                        .map(x -> new GameStartMessage()))); // TODO: ignore messages from dead players.
+        Flux<GameMessage> cache = messageSubscriber.getOutputEvents()
+                .cache(1)
+                ;
+        messageSubscriber.setOutputEvents(
+                cache.filter(x -> x instanceof ReadyMessage || x instanceof RoomStateMessage)
+                        .map(msg -> {
+                                    if (msg instanceof ReadyMessage) {
+                                        playerReady.put(((ReadyMessage) msg).getPlayer().getNickname(), true);
+                                        if (playerReady.size() == MAX_CONNECTIONS) {
+                                            new StartCounterMessage();
+                                        } else {
+                                            new RoomStateMessage(playerReady);
+                                        }
+                                    }
+                                    return msg;
+                                }
+                        )
+        );
+//
+//        cache
+//                .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
+//                        && !(x instanceof ReadyMessage))
+//                .doOnNext(msg -> {
+//                    if (msg instanceof BombExplosionMessage) {
+//                        onBombExplosion((BombExplosionMessage) msg);
+//                    }
+//                })
+//                .mergeWith(cache
+//                        .filter(x -> x instanceof PositioningMessage)
+//                        .map(x -> {
+//                            x.setOccurrence(LocalDateTime.now());
+//                            return (PositioningMessage) x;
+//                        })
+//                        .buffer(Duration.ofSeconds(2))
+//                        .flatMap(messages ->
+//                                aggregator.aggregate(messages, currentGameState))
+//                )
+//                .mergeWith(cache
+//                        .filter(x -> x instanceof StartCounterMessage)
+//                        .delaySubscription(Duration.ofSeconds(3))
+//                        .map(x -> new GameStartMessage()))); // TODO: ignore messages from dead players.
     }
 
     private void onBombExplosion(BombExplosionMessage explosionMessage) {
@@ -153,18 +162,15 @@ public class GameEngine {
     }
 
     public Flux<GameMessage> subscribePlayer(Flux<UserMessage> messageFluxCache, WebSocketSession session, final Map<String, WebSocketSession> players) {
-        Flux<GameMessage> connectionFlux = messageFluxCache
-                 .filter(x -> x instanceof ConnectMessage)
+        return messageFluxCache
+                .filter(x -> x instanceof ConnectMessage)
                 .take(1)
                 .doOnNext(x -> {
                     registerPlayer(x, session, players);
                 })
-                .map(x -> new RoomStateMessage(playerReady));
-        return connectionFlux.concatWith(messageFluxCache
-                .skipWhile(x -> x instanceof ConnectMessage)
-                .skipWhile(x -> playerReady.values().contains(false) && playerReady.entrySet().size() != MAX_CONNECTIONS))
-        //        .subscribe(messageSubscriber::onNext, messageSubscriber::onError)
-        ;
+                .map(x->new RoomStateMessage(playerReady))
+//                .ignoreElements()
+                ;
     }
 
     private void registerPlayer(UserMessage userMessage, WebSocketSession session, final Map<String, WebSocketSession> players) {
@@ -175,13 +181,15 @@ public class GameEngine {
                 MutablePair.of(gamePlayer, LocalDateTime.now()));
         //TODO: inject position.
         currentGameState.getPlayers().add(gamePlayer);
-        playerReady.put(player, false);
+        playerReady.put(player.getNickname(), false);
     }
 
-    public Publisher<WebSocketMessage> getGameFlow(WebSocketSession session) {
+    public Flux<GameMessage> getGameFlow() {
         return messageSubscriber
-                .getOutputEvents()
-                .map(mapper::toJSON)
-                .map(session::textMessage);
+                .getOutputEvents();
+    }
+
+    public void setGameFlow(Flux<GameMessage> flux) {
+        messageSubscriber.setOutputEvents(flux);
     }
 }
