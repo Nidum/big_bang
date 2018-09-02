@@ -74,31 +74,31 @@ public class GameEngine {
                                 }
                         )
                         .takeWhile(x -> playerReady.size() != MAX_CONNECTIONS || playerReady.values().contains(false))
-                        .doOnComplete(() -> System.out.println("Finito"))
                         .concatWith(
                                 Mono.just((GameMessage) new StartCounterMessage())
                                         .concatWith(Mono
                                                 .just((GameMessage) new GameStartMessage())
                                                 .delaySubscription(Duration.ofSeconds(3)))
-//                                .concatWith(
-//                                        cache.filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
-//                                                && !(x instanceof ReadyMessage))
-//                                                .doOnNext(msg -> {
-//                                                    if (msg instanceof BombExplosionMessage) {
-//                                                        onBombExplosion((BombExplosionMessage) msg);
-//                                                    }
-//                                                })
-//                                                .mergeWith(cache
-//                                                        .filter(x -> x instanceof PositioningMessage)
-//                                                        .map(x -> {
-//                                                            x.setOccurrence(LocalDateTime.now());
-//                                                            return (PositioningMessage) x;
-//                                                        })
-//                                                        .buffer(Duration.ofSeconds(2))
-//                                                        .flatMap(messages ->
-//                                                                aggregator.aggregate(messages, currentGameState))
-//                                                )
-//                                )
+                                        .concatWith(cache
+                                                .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
+                                                        && !(x instanceof ReadyMessage))
+                                                .doOnNext(msg -> {
+                                                    if (msg instanceof BombExplosionMessage) {
+                                                        onBombExplosion((BombExplosionMessage) msg);
+                                                    }
+                                                })
+                                                .mergeWith(cache
+                                                        .filter(x -> x instanceof PositioningMessage)
+                                                        .map(x -> {
+                                                            x.setOccurrence(LocalDateTime.now());
+                                                            return (PositioningMessage) x;
+                                                        })
+                                                        .buffer(Duration.ofSeconds(2))
+                                                        .flatMap(messages ->
+                                                                aggregator.aggregate(messages, currentGameState))
+                                                )
+
+                                        )
                         )
         );
         ; // TODO: ignore messages from dead players.
