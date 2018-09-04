@@ -61,25 +61,15 @@ public class GameEngine {
                 .cache(1);
         messageSubscriber.setOutputEvents(
                 cache.filter(x -> x instanceof ReadyMessage || x instanceof RoomStateMessage)
-                        .map(msg -> {
-                                    if (msg instanceof ReadyMessage) {
-                                        playerReady.put(((ReadyMessage) msg).getPlayer().getNickname(), true);
-                                        if (playerReady.size() == MAX_CONNECTIONS && !playerReady.values().contains(false)) {
-                                            return new StartCounterMessage();
-                                        } else {
-                                            return new RoomStateMessage(playerReady);
-                                        }
-                                    }
-                                    return msg;
-                                }
-                        )
+                        .map(this::processReadyMessages)
                         .takeWhile(x -> playerReady.size() != MAX_CONNECTIONS || playerReady.values().contains(false))
                         .concatWith(
                                 Mono.just((GameMessage) new StartCounterMessage())
-                                        .concatWith(Mono
-                                                .just((GameMessage) new GameStartMessage())
+                                        .concatWith(Flux
+                                                .just(new GameStartMessage(), currentGameState)
                                                 .delaySubscription(Duration.ofSeconds(3)))
-                                        .concatWith(cache
+                                        .concatWith(
+                                                cache
                                                 .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
                                                         && !(x instanceof ReadyMessage))
                                                 .doOnNext(msg -> {
@@ -87,7 +77,8 @@ public class GameEngine {
                                                         onBombExplosion((BombExplosionMessage) msg);
                                                     }
                                                 })
-                                                .mergeWith(cache
+                                                .mergeWith(
+                                                        cache
                                                         .filter(x -> x instanceof PositioningMessage)
                                                         .map(x -> {
                                                             x.setOccurrence(LocalDateTime.now());
@@ -116,7 +107,6 @@ public class GameEngine {
         int height = gameField.getHeight();
 
         Position bombPosition = explosionMessage.getPosition();
-        // TODO: decrease HP of players in explosion range.
 
         int leftX = getRange(bombPosition.getX(),
                 (i) -> (i > 0 && i > bombPosition.getX() - EXPLOSION_RADIUS),
@@ -145,6 +135,18 @@ public class GameEngine {
                 }
         );
         explosionMessage.setDamaged(damagedPlayers);
+    }
+
+    private GameMessage processReadyMessages(GameMessage msg) {
+        if (msg instanceof ReadyMessage) {
+            playerReady.put(((ReadyMessage) msg).getPlayer().getNickname(), true);
+            if (playerReady.size() == MAX_CONNECTIONS && !playerReady.values().contains(false)) {
+                return new StartCounterMessage();
+            } else {
+                return new RoomStateMessage(playerReady);
+            }
+        }
+        return msg;
     }
 
     private int getRange(int position, Predicate<Integer> range, GameField gameField, boolean isHorizontal, int step) {
@@ -180,6 +182,7 @@ public class GameEngine {
         Player player = userMessage.getPlayer();
         players.put(player.getNickname(), session);
         GamePlayer gamePlayer = new GamePlayer(player);
+
         currentGameState.getPlayersMovesTime().put(player.getNickname(),
                 MutablePair.of(gamePlayer, LocalDateTime.now()));
         //TODO: inject position.
@@ -192,7 +195,4 @@ public class GameEngine {
                 .getOutputEvents();
     }
 
-    public void setGameFlow(Flux<GameMessage> flux) {
-        messageSubscriber.setOutputEvents(flux);
-    }
 }
