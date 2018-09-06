@@ -1,7 +1,12 @@
 package eleks.mentorship.bigbang.websocket.message.user;
 
-/**
- * Created by Emiliia Nesterovych on 8/29/2018.
- */
+import eleks.mentorship.bigbang.websocket.message.MessageType;
+
+import static eleks.mentorship.bigbang.websocket.message.MessageType.PLAYER_CONNECTED;
+
 public class ConnectMessage extends UserMessage {
+    @Override
+    public MessageType getType() {
+        return PLAYER_CONNECTED;
+    }
 }

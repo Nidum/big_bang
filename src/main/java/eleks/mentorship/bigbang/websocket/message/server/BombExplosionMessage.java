@@ -1,15 +1,15 @@
 package eleks.mentorship.bigbang.websocket.message.server;
 
+import eleks.mentorship.bigbang.domain.Position;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
-import eleks.mentorship.bigbang.util.Position;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
+import eleks.mentorship.bigbang.websocket.message.MessageType;
 import lombok.Data;
 
 import java.util.List;
 
-/**
- * Created by Emiliia Nesterovych on 8/25/2018.
- */
+import static eleks.mentorship.bigbang.websocket.message.MessageType.BOMB_EXPLOSION;
+
 @Data
 public class BombExplosionMessage extends GameMessage {
     protected GamePlayer owner;
@@ -19,5 +19,10 @@ public class BombExplosionMessage extends GameMessage {
     public BombExplosionMessage(GamePlayer owner, Position position) {
         this.owner = owner;
         this.position = position;
+    }
+
+    @Override
+    public MessageType getType() {
+        return BOMB_EXPLOSION;
     }
 }

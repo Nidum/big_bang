@@ -1,7 +1,12 @@
 package eleks.mentorship.bigbang.websocket.message.user;
 
-/**
- * Created by Emiliia Nesterovych on 8/24/2018.
- */
+import eleks.mentorship.bigbang.websocket.message.MessageType;
+
+import static eleks.mentorship.bigbang.websocket.message.MessageType.PLAYER_PLACE_BOMB;
+
 public class BombPlacementMessage extends PositioningMessage {
+    @Override
+    public MessageType getType() {
+        return PLAYER_PLACE_BOMB;
+    }
 }

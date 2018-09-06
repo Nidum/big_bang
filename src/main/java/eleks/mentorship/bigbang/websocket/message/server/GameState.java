@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import eleks.mentorship.bigbang.gameplay.GameField;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
+import eleks.mentorship.bigbang.websocket.message.MessageType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,9 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by Emiliia Nesterovych on 7/1/2018.
- */
+import static eleks.mentorship.bigbang.websocket.message.MessageType.GAME_STATE;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -24,4 +24,9 @@ public class GameState extends GameMessage {
     private Map<String, Pair<GamePlayer, LocalDateTime>> playersMovesTime;
     private List<GamePlayer> players;
     private GameField gameField;
+
+    @Override
+    public MessageType getType() {
+        return GAME_STATE;
+    }
 }

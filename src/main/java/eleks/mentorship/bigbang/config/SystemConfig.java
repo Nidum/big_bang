@@ -1,14 +1,11 @@
 package eleks.mentorship.bigbang.config;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
 
-/**
- * Created by Emiliia Nesterovych on 8/24/2018.
- */
-@Component
+@Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SystemConfig {
     private static Environment env;

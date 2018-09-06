@@ -1,8 +1,5 @@
 package eleks.mentorship.bigbang.gameplay;
 
-/**
- * Created by Emiliia Nesterovych on 7/1/2018.
- */
 public enum GameFieldCell {
     FIELD('f'),
     DESTROYABLE_BLOCK('d'),

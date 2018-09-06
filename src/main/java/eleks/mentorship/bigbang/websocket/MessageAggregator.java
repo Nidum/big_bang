@@ -1,7 +1,7 @@
 package eleks.mentorship.bigbang.websocket;
 
+import eleks.mentorship.bigbang.domain.Position;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
-import eleks.mentorship.bigbang.util.Position;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import eleks.mentorship.bigbang.websocket.message.server.BombExplosionMessage;
 import eleks.mentorship.bigbang.websocket.message.server.GameState;
@@ -114,7 +114,8 @@ public class MessageAggregator {
     }
 
     private boolean isPlayerOnCell(PositioningMessage message, GamePlayer player, GameState oldState) {
-        return oldState.getPlayers().stream()
+        return oldState.getPlayers()
+                .stream()
                 .filter(p -> !p.getPlayer().getNickname().equals(player.getPlayer().getNickname()))
                 .map(GamePlayer::getPosition)
                 .anyMatch(p -> p.equals(message.getPosition()));

@@ -1,9 +1,9 @@
 package eleks.mentorship.bigbang.gameplay;
 
 import eleks.mentorship.bigbang.Player;
-import eleks.mentorship.bigbang.common.exception.UserMissingException;
+import eleks.mentorship.bigbang.domain.Position;
+import eleks.mentorship.bigbang.exception.UserMissingException;
 import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
-import eleks.mentorship.bigbang.util.Position;
 import eleks.mentorship.bigbang.websocket.MessageAggregator;
 import eleks.mentorship.bigbang.websocket.WebSocketMessageSubscriber;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
@@ -15,8 +15,6 @@ import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.reactivestreams.Publisher;
-import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -32,64 +30,64 @@ import java.util.stream.Collectors;
 
 import static eleks.mentorship.bigbang.websocket.Room.MAX_CONNECTIONS;
 
-/**
- * Created by Emiliia Nesterovych on 7/10/2018.
- */
 @Data
 @AllArgsConstructor
 public class GameEngine {
     private static final int EXPLOSION_DELAY = 5; // In seconds.
-    private static final int EXPLOSION_RADIUS = 3; // Cells.
+    private static final int EXPLOSION_RADIUS = 3; // In cells.
+    private static final int BUFFER_WINDOW = 2000; // In milliseconds.
 
-    private JsonMessageMapper mapper;
-    private WebSocketMessageSubscriber messageSubscriber;
-    private MessageAggregator aggregator;
+    private final JsonMessageMapper mapper;
+    private final WebSocketMessageSubscriber messageSubscriber;
+    private final MessageAggregator aggregator;
+
     private GameState currentGameState;
     private Map<String, Boolean> playerReady;
 
     // TODO: inject game field (randomly).
     public GameEngine(JsonMessageMapper mapper, MessageAggregator aggregator) {
         this.mapper = mapper;
-        currentGameState = new GameState(new HashMap<>(), new ArrayList<>(), new GameField("gamefield"));
+        this.currentGameState = new GameState(new HashMap<>(), new ArrayList<>(), new GameField("gamefield"));
         this.messageSubscriber = new WebSocketMessageSubscriber();
         this.aggregator = aggregator;
-        playerReady = new HashMap<>();
+        this.playerReady = new HashMap<>();
     }
 
     public void buildGamePlay() {
         Flux<GameMessage> cache = messageSubscriber.getOutputEvents()
                 .cache(1);
+
+        Mono<GameMessage> startGameCounterMono = Mono.just(new StartCounterMessage());
+
+        Flux<GameMessage> gameStartFlux = Flux
+                .just(new GameStartMessage(), currentGameState)
+                .delaySubscription(Duration.ofSeconds(3));
+
+        Flux<GameMessage> gameMessageFlux = cache
+                .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
+                        && !(x instanceof ReadyMessage))
+                .doOnNext(msg -> {
+                    if (msg instanceof BombExplosionMessage) {
+                        onBombExplosion((BombExplosionMessage) msg);
+                    }
+                });
+
+        Flux<GameMessage> gamePlayMessageFlux = cache
+                .filter(x -> x instanceof PositioningMessage)
+                .map(x -> (PositioningMessage) x)
+                .buffer(Duration.ofSeconds(BUFFER_WINDOW))
+                .flatMap(messages ->
+                        aggregator.aggregate(messages, currentGameState));
+
         messageSubscriber.setOutputEvents(
                 cache.filter(x -> x instanceof ReadyMessage || x instanceof RoomStateMessage)
                         .map(this::processReadyMessages)
                         .takeWhile(x -> playerReady.size() != MAX_CONNECTIONS || playerReady.values().contains(false))
-                        .concatWith(
-                                Mono.just((GameMessage) new StartCounterMessage())
-                                        .concatWith(Flux
-                                                .just(new GameStartMessage(), currentGameState)
-                                                .delaySubscription(Duration.ofSeconds(3)))
-                                        .concatWith(
-                                                cache
-                                                .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
-                                                        && !(x instanceof ReadyMessage))
-                                                .doOnNext(msg -> {
-                                                    if (msg instanceof BombExplosionMessage) {
-                                                        onBombExplosion((BombExplosionMessage) msg);
-                                                    }
-                                                })
-                                                .mergeWith(
-                                                        cache
-                                                        .filter(x -> x instanceof PositioningMessage)
-                                                        .map(x -> {
-                                                            x.setOccurrence(LocalDateTime.now());
-                                                            return (PositioningMessage) x;
-                                                        })
-                                                        .buffer(Duration.ofSeconds(2))
-                                                        .flatMap(messages ->
-                                                                aggregator.aggregate(messages, currentGameState))
-                                                )
-
-                                        )
+                        .concatWith(startGameCounterMono
+                                .concatWith(gameStartFlux)
+                                .concatWith(gameMessageFlux
+                                        .mergeWith(gamePlayMessageFlux)
+                                )
                         )
         );
         ; // TODO: ignore messages from dead players.

@@ -6,9 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
 
-/**
- * Created by Emiliia Nesterovych on 8/24/2018.
- */
 @Slf4j
 @Data
 public class WebSocketMessageSubscriber {

@@ -2,14 +2,10 @@ package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.socket.WebSocketSession;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Emiliia Nesterovych on 7/15/2018.
- */
 @Component
 public class RoomManager {
     private List<Room> rooms;

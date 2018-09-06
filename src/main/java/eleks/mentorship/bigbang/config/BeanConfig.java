@@ -6,9 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
 
-/**
- * Created by Emiliia Nesterovych on 7/14/2018.
- */
 @Configuration
 public class BeanConfig {
 

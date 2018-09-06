@@ -26,7 +26,7 @@ public class GameField {
         try {
             file = new ClassPathResource(fileName).getFile();
         } catch (IOException e) {
-            throw new IllegalArgumentException("File " + file.getPath() + " does not exist. Game field can not be generated");
+            throw new IllegalArgumentException("File " + fileName + " does not exist. Game field can not be generated");
         }
 
         BufferedReader reader;

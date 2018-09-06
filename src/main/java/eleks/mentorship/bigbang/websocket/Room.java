@@ -7,15 +7,11 @@ import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import lombok.Data;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Created by Emiliia Nesterovych on 7/15/2018.
- */
 @Data
 public class Room {
     public static final int MAX_CONNECTIONS = 2;

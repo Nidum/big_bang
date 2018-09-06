@@ -1,9 +1,13 @@
 package eleks.mentorship.bigbang.websocket.message.server;
 
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
+import eleks.mentorship.bigbang.websocket.message.MessageType;
 
-/**
- * Created by Emiliia Nesterovych on 8/30/2018.
- */
+import static eleks.mentorship.bigbang.websocket.message.MessageType.START_GAME_COUNTER;
+
 public class StartCounterMessage extends GameMessage {
+    @Override
+    public MessageType getType() {
+        return START_GAME_COUNTER;
+    }
 }

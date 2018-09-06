@@ -8,9 +8,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-/**
- * Created by Emiliia Nesterovych on 8/20/2018.
- */
 @Component
 public class JsonMessageMapper {
     private ObjectMapper mapper;

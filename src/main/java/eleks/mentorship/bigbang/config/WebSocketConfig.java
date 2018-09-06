@@ -11,22 +11,18 @@ import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAd
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by Emiliia Nesterovych on 7/1/2018.
- */
 @Configuration
 @AllArgsConstructor
 public class WebSocketConfig {
-    private WebSocketHandler webSocketHandler;
+    private final WebSocketHandler webSocketHandler;
 
     @Bean
     public HandlerMapping webSocketHandlerMapping() {
-        Map<String, WebSocketHandler> map = new HashMap<>();
-        map.put("/game", webSocketHandler);
+        Map<String, WebSocketHandler> urlMapping = new HashMap<>();
+        urlMapping.put("/game", webSocketHandler);
 
         SimpleUrlHandlerMapping handlerMapping = new SimpleUrlHandlerMapping();
-        handlerMapping.setOrder(1);
-        handlerMapping.setUrlMap(map);
+        handlerMapping.setUrlMap(urlMapping);
         return handlerMapping;
     }
 
