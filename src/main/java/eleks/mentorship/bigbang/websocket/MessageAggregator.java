@@ -1,30 +1,27 @@
 package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.domain.Position;
+import eleks.mentorship.bigbang.exception.MessageFromUnknownUserException;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
+import eleks.mentorship.bigbang.gameplay.PlayerInfo;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import eleks.mentorship.bigbang.websocket.message.server.BombExplosionMessage;
 import eleks.mentorship.bigbang.websocket.message.server.GameState;
-import eleks.mentorship.bigbang.websocket.message.user.BombPlacementMessage;
-import eleks.mentorship.bigbang.websocket.message.user.MoveMessage;
 import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
 import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
-/**
- * Created by Emiliia Nesterovych on 8/24/2018.
- */
+import static eleks.mentorship.bigbang.websocket.message.MessageType.PLAYER_MOVE;
+import static eleks.mentorship.bigbang.websocket.message.MessageType.PLAYER_PLACE_BOMB;
+
 @Component
 public class MessageAggregator {
     private static final long MOVE_DELTA = 1000; // In milliseconds.
@@ -39,28 +36,25 @@ public class MessageAggregator {
      */
     public Flux<GameMessage> aggregate(List<PositioningMessage> messages, GameState oldState) {
         messages.sort(Comparator.comparing(UserMessage::getOccurrence));
-        Map<String, Pair<GamePlayer, LocalDateTime>> playersMovesTime = oldState.getPlayersMovesTime();
-
         Flux<GameMessage> result = Flux.empty();
 
         for (PositioningMessage message : messages) {
-            String nickname = message.getPlayer().getNickname();
-            Optional<Pair<GamePlayer, LocalDateTime>> optionalPair = Optional.ofNullable(playersMovesTime.get(nickname));
-            if(!optionalPair.isPresent()) continue;
-            Pair<GamePlayer, LocalDateTime> pair = optionalPair.get();
-            GamePlayer player = pair.getLeft();
+            PlayerInfo playerInfo = message.getPlayerInfo();
+            GamePlayer player = oldState.getPlayers().stream()
+                    .filter(gamePlayer -> gamePlayer.getPlayerInfo().equals(message.getPlayerInfo()))
+                    .findFirst()
+                    .orElseThrow(() -> new MessageFromUnknownUserException("Got message from unknown user: " + message));
 
-            if (message instanceof MoveMessage) {
-                LocalDateTime lastPlayersMove = pair.getRight();
+            if (message.getType().equals(PLAYER_MOVE)) {
+                Instant lastPlayersMove = player.getLastMoveTime();
                 long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurrence());
                 if (timeBetween >= MOVE_DELTA && isCellAvailable(message, player, oldState)) {
-                    pair.setValue(message.getOccurrence());
                     Position oldPosition = player.getPosition();
                     oldPosition.setX(message.getPosition().getX());
                     oldPosition.setY(message.getPosition().getY());
                     result = result.concatWith(Mono.just(oldState));
                 }
-            } else if (message instanceof BombPlacementMessage) {
+            } else if (message.getType().equals(PLAYER_PLACE_BOMB)) {
                 if (isCellAvailable(message, player, oldState) &&
                         !isPlayerOnCell(message, player, oldState) &&
                         player.getBombsLeft() > 0) {
@@ -71,7 +65,7 @@ public class MessageAggregator {
                     Flux<GameMessage> flux = Flux.just(oldState);
                     result = result
                             .concatWith(flux.mergeWith(Mono.just(explosionMessage)
-                            .delayElement(Duration.ofSeconds(EXPLOSION_DELAY))));
+                                    .delayElement(Duration.ofSeconds(EXPLOSION_DELAY))));
                 }
             }
         }
@@ -116,7 +110,7 @@ public class MessageAggregator {
     private boolean isPlayerOnCell(PositioningMessage message, GamePlayer player, GameState oldState) {
         return oldState.getPlayers()
                 .stream()
-                .filter(p -> !p.getPlayer().getNickname().equals(player.getPlayer().getNickname()))
+                .filter(p -> !p.getPlayerInfo().equals(player.getPlayerInfo()))
                 .map(GamePlayer::getPosition)
                 .anyMatch(p -> p.equals(message.getPosition()));
     }

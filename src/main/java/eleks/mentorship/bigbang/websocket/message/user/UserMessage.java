@@ -1,10 +1,22 @@
 package eleks.mentorship.bigbang.websocket.message.user;
 
-import eleks.mentorship.bigbang.Player;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import eleks.mentorship.bigbang.gameplay.PlayerInfo;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
-import lombok.Data;
 
-@Data
+
 public abstract class UserMessage extends GameMessage {
-    protected Player player;
+    @JsonIgnore
+    protected PlayerInfo playerInfo;
+
+    @JsonProperty
+    public PlayerInfo getPlayerInfo() {
+        return playerInfo;
+    }
+
+    @JsonIgnore
+    public void setPlayerInfo(PlayerInfo playerInfo) {
+        this.playerInfo = playerInfo;
+    }
 }

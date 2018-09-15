@@ -41,10 +41,10 @@ public class Room {
         return players.size() == MAX_CONNECTIONS;
     }
 
-    public Flux<GameMessage> registerPlayer(Flux<UserMessage> flux, WebSocketSession session) {
+    public Flux<GameMessage> registerPlayer(Flux<UserMessage> userMessageFlux) {
         if (players.isEmpty()) {
             engine.buildGamePlay();
         }
-        return engine.subscribePlayer(flux, session, players);
+        return engine.subscribePlayer(userMessageFlux);
     }
 }

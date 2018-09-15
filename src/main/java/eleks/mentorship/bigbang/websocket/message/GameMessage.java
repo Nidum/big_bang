@@ -11,7 +11,7 @@ import eleks.mentorship.bigbang.websocket.message.user.MoveMessage;
 import eleks.mentorship.bigbang.websocket.message.user.ReadyMessage;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
@@ -30,7 +30,7 @@ import java.time.LocalDateTime;
 })
 @Data
 public abstract class GameMessage {
-    protected LocalDateTime occurrence;
+    protected Instant occurrence;
 
     @JsonProperty("type")
     public abstract MessageType getType();

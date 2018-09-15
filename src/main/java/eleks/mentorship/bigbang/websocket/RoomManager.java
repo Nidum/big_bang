@@ -26,11 +26,7 @@ public class RoomManager {
         }
     }
 
-    public Room assignUserToRoom() {
-        return findFreeRoom();
-    }
-
-    private Room findFreeRoom() {
+    public Room findFreeRoom() {
         return rooms.stream()
                 .filter(r -> !r.isFilled() && !r.isGameStarted())
                 .findFirst().orElseGet(() -> {

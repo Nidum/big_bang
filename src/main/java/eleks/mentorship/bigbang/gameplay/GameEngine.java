@@ -1,12 +1,12 @@
 package eleks.mentorship.bigbang.gameplay;
 
-import eleks.mentorship.bigbang.Player;
 import eleks.mentorship.bigbang.domain.Position;
 import eleks.mentorship.bigbang.exception.UserMissingException;
 import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
 import eleks.mentorship.bigbang.websocket.MessageAggregator;
 import eleks.mentorship.bigbang.websocket.WebSocketMessageSubscriber;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
+import eleks.mentorship.bigbang.websocket.message.MessageType;
 import eleks.mentorship.bigbang.websocket.message.server.*;
 import eleks.mentorship.bigbang.websocket.message.user.ConnectMessage;
 import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
@@ -14,13 +14,11 @@ import eleks.mentorship.bigbang.websocket.message.user.ReadyMessage;
 import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +27,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static eleks.mentorship.bigbang.websocket.Room.MAX_CONNECTIONS;
+import static eleks.mentorship.bigbang.websocket.message.MessageType.*;
+import static eleks.mentorship.bigbang.websocket.message.MessageUtils.IS_POSITIONING_MESSAGE;
 
 @Data
 @AllArgsConstructor
@@ -42,12 +42,12 @@ public class GameEngine {
     private final MessageAggregator aggregator;
 
     private GameState currentGameState;
-    private Map<String, Boolean> playerReady;
+    private Map<PlayerInfo, Boolean> playerReady;
 
     // TODO: inject game field (randomly).
     public GameEngine(JsonMessageMapper mapper, MessageAggregator aggregator) {
         this.mapper = mapper;
-        this.currentGameState = new GameState(new HashMap<>(), new ArrayList<>(), new GameField("gamefield"));
+        this.currentGameState = new GameState(new ArrayList<>(), new GameField("gamefield"));
         this.messageSubscriber = new WebSocketMessageSubscriber();
         this.aggregator = aggregator;
         this.playerReady = new HashMap<>();
@@ -63,17 +63,24 @@ public class GameEngine {
                 .just(new GameStartMessage(), currentGameState)
                 .delaySubscription(Duration.ofSeconds(3));
 
+        Predicate<GameMessage> isGameMessage = message -> {
+            MessageType msgType = message.getType();
+            return !(msgType.equals(START_GAME_COUNTER)
+                    && !(msgType.equals(PLAYER_PLACE_BOMB))
+                    && !(msgType.equals(PLAYER_MOVE))
+                    && !(msgType.equals(PLAYER_READY)));
+        };
+
         Flux<GameMessage> gameMessageFlux = cache
-                .filter(x -> !(x instanceof PositioningMessage) && !(x instanceof StartCounterMessage)
-                        && !(x instanceof ReadyMessage))
+                .filter(isGameMessage)
                 .doOnNext(msg -> {
-                    if (msg instanceof BombExplosionMessage) {
+                    if (msg.getType().equals(BOMB_EXPLOSION)) {
                         onBombExplosion((BombExplosionMessage) msg);
                     }
                 });
 
         Flux<GameMessage> gamePlayMessageFlux = cache
-                .filter(x -> x instanceof PositioningMessage)
+                .filter(IS_POSITIONING_MESSAGE)
                 .map(x -> (PositioningMessage) x)
                 .buffer(Duration.ofSeconds(BUFFER_WINDOW))
                 .flatMap(messages ->
@@ -96,7 +103,7 @@ public class GameEngine {
     private void onBombExplosion(BombExplosionMessage explosionMessage) {
         GamePlayer gamePlayer = explosionMessage.getOwner();
         GamePlayer fieldPlayer = currentGameState.getPlayers().stream()
-                .filter(x -> x.getPlayer().getNickname().equals(gamePlayer.getPlayer().getNickname()))
+                .filter(x -> x.getPlayerInfo().getUserId().equals(gamePlayer.getPlayerInfo().getUserId()))
                 .findFirst()
                 .orElseThrow(UserMissingException::new);
         fieldPlayer.setBombsLeft(fieldPlayer.getBombsLeft() + 1);
@@ -136,8 +143,8 @@ public class GameEngine {
     }
 
     private GameMessage processReadyMessages(GameMessage msg) {
-        if (msg instanceof ReadyMessage) {
-            playerReady.put(((ReadyMessage) msg).getPlayer().getNickname(), true);
+        if (msg.getType().equals(PLAYER_READY)) {
+            playerReady.put(((ReadyMessage) msg).getPlayerInfo(), true);
             if (playerReady.size() == MAX_CONNECTIONS && !playerReady.values().contains(false)) {
                 return new StartCounterMessage();
             } else {
@@ -165,27 +172,21 @@ public class GameEngine {
         return res;
     }
 
-    public Flux<GameMessage> subscribePlayer(Flux<UserMessage> messageFluxCache, WebSocketSession session, final Map<String, WebSocketSession> players) {
+    public Flux<GameMessage> subscribePlayer(Flux<UserMessage> messageFluxCache) {
         return messageFluxCache
                 .filter(x -> x instanceof ConnectMessage)
                 .take(1)
-                .doOnNext(x -> {
-                    registerPlayer(x, session, players);
-                })
+                .doOnNext(x -> registerPlayer(x.getPlayerInfo()))
                 .map(x -> new RoomStateMessage(playerReady))
                 ;
     }
 
-    private void registerPlayer(UserMessage userMessage, WebSocketSession session, final Map<String, WebSocketSession> players) {
-        Player player = userMessage.getPlayer();
-        players.put(player.getNickname(), session);
-        GamePlayer gamePlayer = new GamePlayer(player);
-
-        currentGameState.getPlayersMovesTime().put(player.getNickname(),
-                MutablePair.of(gamePlayer, LocalDateTime.now()));
+    private void registerPlayer(PlayerInfo playerInfo) {
+        GamePlayer gamePlayer = new GamePlayer(playerInfo);
+        gamePlayer.setLastMoveTime(Instant.now());
         //TODO: inject position.
         currentGameState.getPlayers().add(gamePlayer);
-        playerReady.put(player.getNickname(), false);
+        playerReady.put(playerInfo, false);
     }
 
     public Flux<GameMessage> getGameFlow() {

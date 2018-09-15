@@ -1,27 +1,29 @@
 package eleks.mentorship.bigbang.gameplay;
 
-import eleks.mentorship.bigbang.Player;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import eleks.mentorship.bigbang.domain.Position;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.Instant;
+
 @Data
-//@NoArgsConstructor
 @AllArgsConstructor
 public class GamePlayer {
-    private Player player;
+    private final PlayerInfo playerInfo;
     private Integer livesLeft = 3;
     private Integer bombsLeft = 5;
     private Integer bombsDelayMultiplier = 1;
     private Position position;
+    @JsonIgnore
+    private Instant lastMoveTime;
 
-    public GamePlayer(Player player) {
-        this.player = player;
-        position = new Position(0, 0);
+    public GamePlayer(PlayerInfo playerInfo) {
+        this(playerInfo, new Position(0,0));
     }
 
-    public GamePlayer(Player player, Position startPosition) {
-        this.player = player;
-        position = startPosition;
+    public GamePlayer(PlayerInfo playerInfo, Position startPosition) {
+        this.position = startPosition;
+        this.playerInfo = playerInfo;
     }
 }

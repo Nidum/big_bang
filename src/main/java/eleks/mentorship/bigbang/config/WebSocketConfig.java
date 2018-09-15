@@ -23,6 +23,7 @@ public class WebSocketConfig {
 
         SimpleUrlHandlerMapping handlerMapping = new SimpleUrlHandlerMapping();
         handlerMapping.setUrlMap(urlMapping);
+        handlerMapping.setOrder(0);
         return handlerMapping;
     }
 
