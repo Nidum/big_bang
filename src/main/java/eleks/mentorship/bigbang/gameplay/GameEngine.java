@@ -8,7 +8,6 @@ import eleks.mentorship.bigbang.websocket.WebSocketMessageSubscriber;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import eleks.mentorship.bigbang.websocket.message.MessageType;
 import eleks.mentorship.bigbang.websocket.message.server.*;
-import eleks.mentorship.bigbang.websocket.message.user.ConnectMessage;
 import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
 import eleks.mentorship.bigbang.websocket.message.user.ReadyMessage;
 import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
@@ -19,8 +18,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -47,7 +46,7 @@ public class GameEngine {
     // TODO: inject game field (randomly).
     public GameEngine(JsonMessageMapper mapper, MessageAggregator aggregator) {
         this.mapper = mapper;
-        this.currentGameState = new GameState(new ArrayList<>(), new GameField("gamefield"));
+        this.currentGameState = new GameState(new HashSet<>(), new GameField("gamefield"));
         this.messageSubscriber = new WebSocketMessageSubscriber();
         this.aggregator = aggregator;
         this.playerReady = new HashMap<>();
@@ -65,16 +64,16 @@ public class GameEngine {
 
         Predicate<GameMessage> isGameMessage = message -> {
             MessageType msgType = message.getType();
-            return !(msgType.equals(START_GAME_COUNTER)
-                    && !(msgType.equals(PLAYER_PLACE_BOMB))
-                    && !(msgType.equals(PLAYER_MOVE))
-                    && !(msgType.equals(PLAYER_READY)));
+            return !(msgType.equals(START_COUNTER)
+                    && !(msgType.equals(BOMB))
+                    && !(msgType.equals(MOVE))
+                    && !(msgType.equals(READY)));
         };
 
         Flux<GameMessage> gameMessageFlux = cache
                 .filter(isGameMessage)
                 .doOnNext(msg -> {
-                    if (msg.getType().equals(BOMB_EXPLOSION)) {
+                    if (msg.getType().equals(EXPLOSION)) {
                         onBombExplosion((BombExplosionMessage) msg);
                     }
                 });
@@ -143,8 +142,9 @@ public class GameEngine {
     }
 
     private GameMessage processReadyMessages(GameMessage msg) {
-        if (msg.getType().equals(PLAYER_READY)) {
+        if (msg.getType().equals(READY)) {
             playerReady.put(((ReadyMessage) msg).getPlayerInfo(), true);
+
             if (playerReady.size() == MAX_CONNECTIONS && !playerReady.values().contains(false)) {
                 return new StartCounterMessage();
             } else {
@@ -174,7 +174,7 @@ public class GameEngine {
 
     public Flux<GameMessage> subscribePlayer(Flux<UserMessage> messageFluxCache) {
         return messageFluxCache
-                .filter(x -> x instanceof ConnectMessage)
+                .filter(x -> x.getType().equals(CONNECT))
                 .take(1)
                 .doOnNext(x -> registerPlayer(x.getPlayerInfo()))
                 .map(x -> new RoomStateMessage(playerReady))

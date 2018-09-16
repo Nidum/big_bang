@@ -15,7 +15,7 @@ import java.time.Instant;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
         property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = GameStartMessage.class, name = "start"),
@@ -32,6 +32,6 @@ import java.time.Instant;
 public abstract class GameMessage {
     protected Instant occurrence;
 
-    @JsonProperty("type")
+   @JsonProperty("type")
     public abstract MessageType getType();
 }

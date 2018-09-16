@@ -8,7 +8,7 @@ import lombok.Data;
 
 import java.util.Map;
 
-import static eleks.mentorship.bigbang.websocket.message.MessageType.ROOM_STATE;
+import static eleks.mentorship.bigbang.websocket.message.MessageType.ROOM;
 
 @Data
 @AllArgsConstructor
@@ -17,6 +17,6 @@ public class RoomStateMessage extends GameMessage {
 
     @Override
     public MessageType getType() {
-        return ROOM_STATE;
+        return ROOM;
     }
 }

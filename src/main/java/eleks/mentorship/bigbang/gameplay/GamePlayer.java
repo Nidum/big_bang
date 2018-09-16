@@ -26,4 +26,31 @@ public class GamePlayer {
         this.position = startPosition;
         this.playerInfo = playerInfo;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        GamePlayer that = (GamePlayer) o;
+
+        if (playerInfo != null ? !playerInfo.equals(that.playerInfo) : that.playerInfo != null) return false;
+        if (livesLeft != null ? !livesLeft.equals(that.livesLeft) : that.livesLeft != null) return false;
+        if (bombsLeft != null ? !bombsLeft.equals(that.bombsLeft) : that.bombsLeft != null) return false;
+        if (bombsDelayMultiplier != null ? !bombsDelayMultiplier.equals(that.bombsDelayMultiplier) : that.bombsDelayMultiplier != null)
+            return false;
+        return position != null ? position.equals(that.position) : that.position == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (playerInfo != null ? playerInfo.hashCode() : 0);
+        result = 31 * result + (livesLeft != null ? livesLeft.hashCode() : 0);
+        result = 31 * result + (bombsLeft != null ? bombsLeft.hashCode() : 0);
+        result = 31 * result + (bombsDelayMultiplier != null ? bombsDelayMultiplier.hashCode() : 0);
+        result = 31 * result + (position != null ? position.hashCode() : 0);
+        return result;
+    }
 }

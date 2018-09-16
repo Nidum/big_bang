@@ -19,8 +19,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 
-import static eleks.mentorship.bigbang.websocket.message.MessageType.PLAYER_MOVE;
-import static eleks.mentorship.bigbang.websocket.message.MessageType.PLAYER_PLACE_BOMB;
+import static eleks.mentorship.bigbang.websocket.message.MessageType.MOVE;
+import static eleks.mentorship.bigbang.websocket.message.MessageType.BOMB;
 
 @Component
 public class MessageAggregator {
@@ -45,7 +45,7 @@ public class MessageAggregator {
                     .findFirst()
                     .orElseThrow(() -> new MessageFromUnknownUserException("Got message from unknown user: " + message));
 
-            if (message.getType().equals(PLAYER_MOVE)) {
+            if (message.getType().equals(MOVE)) {
                 Instant lastPlayersMove = player.getLastMoveTime();
                 long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurrence());
                 if (timeBetween >= MOVE_DELTA && isCellAvailable(message, player, oldState)) {
@@ -54,7 +54,7 @@ public class MessageAggregator {
                     oldPosition.setY(message.getPosition().getY());
                     result = result.concatWith(Mono.just(oldState));
                 }
-            } else if (message.getType().equals(PLAYER_PLACE_BOMB)) {
+            } else if (message.getType().equals(BOMB)) {
                 if (isCellAvailable(message, player, oldState) &&
                         !isPlayerOnCell(message, player, oldState) &&
                         player.getBombsLeft() > 0) {

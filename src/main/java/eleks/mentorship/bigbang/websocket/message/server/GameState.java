@@ -8,19 +8,19 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Set;
 
-import static eleks.mentorship.bigbang.websocket.message.MessageType.GAME_STATE;
+import static eleks.mentorship.bigbang.websocket.message.MessageType.STATE;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class GameState extends GameMessage {
-    private List<GamePlayer> players;
+    private Set<GamePlayer> players;
     private GameField gameField;
 
     @Override
     public MessageType getType() {
-        return GAME_STATE;
+        return STATE;
     }
 }

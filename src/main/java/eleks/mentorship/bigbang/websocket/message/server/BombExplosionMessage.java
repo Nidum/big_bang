@@ -8,7 +8,7 @@ import lombok.Data;
 
 import java.util.List;
 
-import static eleks.mentorship.bigbang.websocket.message.MessageType.BOMB_EXPLOSION;
+import static eleks.mentorship.bigbang.websocket.message.MessageType.EXPLOSION;
 
 @Data
 public class BombExplosionMessage extends GameMessage {
@@ -23,6 +23,6 @@ public class BombExplosionMessage extends GameMessage {
 
     @Override
     public MessageType getType() {
-        return BOMB_EXPLOSION;
+        return EXPLOSION;
     }
 }

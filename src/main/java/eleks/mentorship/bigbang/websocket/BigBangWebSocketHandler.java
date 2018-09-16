@@ -29,40 +29,31 @@ public class BigBangWebSocketHandler implements WebSocketHandler {
         Flux<UserMessage> userMessageFlux = session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .map(msg -> mapper.toUserMessage(msg))
-                .log() //Mono.just(new PlayerInfo(UUID.randomUUID(), "test"))
-                .withLatestFrom(currentUser(),
-                        (message, playerInformation) -> {
-                            message.setPlayerInfo(playerInformation);
-                            return message;
-                        })
                 .replay()
-                .autoConnect();
+                .autoConnect()
+                ;
 
         Flux<GameMessage> userConnectionFlux = room.registerPlayer(userMessageFlux);
         WebSocketMessageSubscriber eventPublisher = room.getEngine().getMessageSubscriber();
 
-//        userConnectionFlux
-//                .subscribe(eventPublisher::onNext, eventPublisher::onError);
-//        userMessageFlux
-//                .subscribe(eventPublisher::onNext, eventPublisher::onError);
-//        
-//        Flux<GameMessage> gameFlow = room.getEngine().getGameFlow();
-//
-//        Flux<WebSocketMessage> gameFlowMessageFlux = gameFlow
-//                .map(mapper::toJSON)
-//                .map(session::textMessage);
-//
-//        Flux<WebSocketMessage> messages = userConnectionFlux
-//                .map(x -> mapper.toJSON(x))
-//                .map(session::textMessage)
-//                .ignoreElements()
-//                .concatWith(gameFlowMessageFlux);
+        userConnectionFlux
+                .subscribe(eventPublisher::onNext, eventPublisher::onError);
+        userMessageFlux
+                .subscribe(eventPublisher::onNext, eventPublisher::onError);
 
-        return session.send(
-                userMessageFlux
-                        .map(x -> mapper.toJSON(x))
-                        .map(session::textMessage)
-        );
+        Flux<GameMessage> gameFlow = room.getEngine().getGameFlow();
+
+        Flux<WebSocketMessage> gameFlowMessageFlux = gameFlow
+                .map(mapper::toJSON)
+                .map(session::textMessage);
+
+        Flux<WebSocketMessage> messages = userConnectionFlux
+                .map(x -> mapper.toJSON(x))
+                .map(session::textMessage)
+                .ignoreElements()
+                .concatWith(gameFlowMessageFlux);
+
+        return session.send(messages);
     }
 
     private static Mono<PlayerInfo> currentUser() {
