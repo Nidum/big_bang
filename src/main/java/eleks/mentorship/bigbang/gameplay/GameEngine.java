@@ -183,9 +183,8 @@ public class GameEngine {
     }
 
     private void registerPlayer(PlayerInfo playerInfo) {
-        GamePlayer gamePlayer = new GamePlayer(playerInfo);
+        GamePlayer gamePlayer = new GamePlayer(playerInfo, currentGameState.getFreeSpawn());
         gamePlayer.setLastMoveTime(Instant.now());
-        //TODO: inject position.
         currentGameState.getPlayers().add(gamePlayer);
         playerReady.put(playerInfo, false);
     }

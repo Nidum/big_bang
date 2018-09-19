@@ -1,5 +1,7 @@
 package eleks.mentorship.bigbang.websocket.message.server;
 
+import eleks.mentorship.bigbang.domain.Position;
+import eleks.mentorship.bigbang.exception.TooMuchPlayersInRoomException;
 import eleks.mentorship.bigbang.gameplay.GameField;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
@@ -22,5 +24,15 @@ public class GameState extends GameMessage {
     @Override
     public MessageType getType() {
         return STATE;
+    }
+
+    public Position getFreeSpawn() {
+        return gameField.getSpawns()
+                .stream()
+                .filter(spawn -> players
+                        .stream()
+                        .noneMatch(p -> p.getPosition().equals(spawn)))
+                .findFirst()
+                .orElseThrow(TooMuchPlayersInRoomException::new);
     }
 }

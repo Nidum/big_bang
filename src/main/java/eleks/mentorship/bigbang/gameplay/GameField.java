@@ -1,5 +1,6 @@
 package eleks.mentorship.bigbang.gameplay;
 
+import eleks.mentorship.bigbang.domain.Position;
 import lombok.Data;
 import org.springframework.core.io.ClassPathResource;
 
@@ -12,10 +13,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static eleks.mentorship.bigbang.gameplay.GameFieldCell.SPAWN;
+
 @Data
 public class GameField {
     private List<List<GameFieldCell>> gameField;
     private List<List<Boolean>> bombs;
+    private List<Position> spawns;
+
     /**
      * Reads gamefield description from some file.
      *
@@ -35,6 +40,7 @@ public class GameField {
             String line = reader.readLine();
             gameField = new ArrayList<>();
             bombs = new ArrayList<>();
+            spawns = new ArrayList<>();
 
             while (line != null) {
                 List<GameFieldCell> row = line.chars()
@@ -42,13 +48,13 @@ public class GameField {
                         .map(GameFieldCell::getByChar)
                         .collect(Collectors.toList());
                 int size = row.size();
-                bombs.add(IntStream.range(0, size).mapToObj(x->false).collect(Collectors.toList()));
+                bombs.add(IntStream.range(0, size).mapToObj(x -> false).collect(Collectors.toList()));
 
                 line = reader.readLine();
                 gameField.add(row);
-
             }
 
+            registerSpawns();
             //TODO: Validate field sizes (each width same for all rows).
 
         } catch (Exception e) {
@@ -56,12 +62,25 @@ public class GameField {
         }
     }
 
-    public int getWidth(){
+    public int getWidth() {
         return gameField.get(0).size();
     }
 
-    public int getHeight(){
+    public int getHeight() {
         return gameField.size();
     }
 
+    public List<Position> getSpawns() {
+        return spawns;
+    }
+
+    private void registerSpawns() {
+        for (int i = 0; i < gameField.size(); i++) {
+            for (int j = 0; j < gameField.get(i).size(); j++) {
+                if (gameField.get(i).get(j).equals(SPAWN)) {
+                    spawns.add(new Position(i, j));
+                }
+            }
+        }
+    }
 }

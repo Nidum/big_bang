@@ -37,18 +37,15 @@ public class GamePlayer {
         if (playerInfo != null ? !playerInfo.equals(that.playerInfo) : that.playerInfo != null) return false;
         if (livesLeft != null ? !livesLeft.equals(that.livesLeft) : that.livesLeft != null) return false;
         if (bombsLeft != null ? !bombsLeft.equals(that.bombsLeft) : that.bombsLeft != null) return false;
-        if (bombsDelayMultiplier != null ? !bombsDelayMultiplier.equals(that.bombsDelayMultiplier) : that.bombsDelayMultiplier != null)
-            return false;
-        return position != null ? position.equals(that.position) : that.position == null;
+        return bombsDelayMultiplier != null ? bombsDelayMultiplier.equals(that.bombsDelayMultiplier) : that.bombsDelayMultiplier == null;
     }
 
     @Override
     public int hashCode() {
-        int result = playerInfo != null ? playerInfo.hashCode() : 0;
+        int result = (playerInfo != null ? playerInfo.hashCode() : 0);
         result = 31 * result + (livesLeft != null ? livesLeft.hashCode() : 0);
         result = 31 * result + (bombsLeft != null ? bombsLeft.hashCode() : 0);
         result = 31 * result + (bombsDelayMultiplier != null ? bombsDelayMultiplier.hashCode() : 0);
-        result = 31 * result + (position != null ? position.hashCode() : 0);
         return result;
     }
 }
