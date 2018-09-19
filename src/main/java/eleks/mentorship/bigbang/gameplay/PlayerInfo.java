@@ -12,7 +12,6 @@ import java.util.UUID;
 public class PlayerInfo {
     private UUID userId;
     private String nickname;
-    // TODO: add avatar.
 
     @Override
     public boolean equals(Object o) {

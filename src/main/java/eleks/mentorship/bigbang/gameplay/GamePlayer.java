@@ -31,7 +31,6 @@ public class GamePlayer {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
 
         GamePlayer that = (GamePlayer) o;
 
@@ -45,8 +44,7 @@ public class GamePlayer {
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (playerInfo != null ? playerInfo.hashCode() : 0);
+        int result = playerInfo != null ? playerInfo.hashCode() : 0;
         result = 31 * result + (livesLeft != null ? livesLeft.hashCode() : 0);
         result = 31 * result + (bombsLeft != null ? bombsLeft.hashCode() : 0);
         result = 31 * result + (bombsDelayMultiplier != null ? bombsDelayMultiplier.hashCode() : 0);

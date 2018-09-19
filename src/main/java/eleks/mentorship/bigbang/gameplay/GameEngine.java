@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static eleks.mentorship.bigbang.serialiazation.PlayerReadyConverter.convert;
 import static eleks.mentorship.bigbang.websocket.Room.MAX_CONNECTIONS;
 import static eleks.mentorship.bigbang.websocket.message.MessageType.*;
 import static eleks.mentorship.bigbang.websocket.message.MessageUtils.IS_POSITIONING_MESSAGE;
@@ -54,7 +55,7 @@ public class GameEngine {
 
     public void buildGamePlay() {
         Flux<GameMessage> cache = messageSubscriber.getOutputEvents()
-                .cache(1);
+                .cache(0);
 
         Mono<GameMessage> startGameCounterMono = Mono.just(new StartCounterMessage());
 
@@ -148,7 +149,7 @@ public class GameEngine {
             if (playerReady.size() == MAX_CONNECTIONS && !playerReady.values().contains(false)) {
                 return new StartCounterMessage();
             } else {
-                return new RoomStateMessage(playerReady);
+                return new RoomStateMessage(convert(playerReady));
             }
         }
         return msg;
@@ -177,7 +178,7 @@ public class GameEngine {
                 .filter(x -> x.getType().equals(CONNECT))
                 .take(1)
                 .doOnNext(x -> registerPlayer(x.getPlayerInfo()))
-                .map(x -> new RoomStateMessage(playerReady))
+                .map(x -> new RoomStateMessage(convert(playerReady)))
                 ;
     }
 
