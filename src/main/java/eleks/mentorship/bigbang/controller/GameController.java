@@ -1,5 +1,6 @@
 package eleks.mentorship.bigbang.controller;
 
+import eleks.mentorship.bigbang.gameplay.PlayerInfo;
 import eleks.mentorship.bigbang.security.UserPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -13,14 +14,13 @@ import java.security.Principal;
 @RestController
 public class GameController {
 
-    @GetMapping("/play")
-    public Mono<String> greet(Mono<Principal> principal) {
+    @GetMapping("/user")
+    public Mono<PlayerInfo> greet(Mono<Principal> principal) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
                 .map(Authentication::getPrincipal)
                 .map(p -> (UserPrincipal) p)
-                .map(UserPrincipal::getNickname)
-                .map(name -> String.format("Hello, %s", name));
+                .map(p->new PlayerInfo(p.getId(), p.getNickname()));
     }
 
 }
