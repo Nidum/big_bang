@@ -30,7 +30,7 @@ public class WebSecurityConfig {
                 .authenticated()
                 .and()
                 .formLogin()
-                .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/play"))
+                .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("http://localhost:4200"))
                 .and()
                 .build();
     }
