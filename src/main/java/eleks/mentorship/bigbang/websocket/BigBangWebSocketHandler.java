@@ -47,13 +47,7 @@ public class BigBangWebSocketHandler implements WebSocketHandler {
                 .map(mapper::toJSON)
                 .map(session::textMessage);
 
-        Flux<WebSocketMessage> messages = userConnectionFlux
-                .map(x -> mapper.toJSON(x))
-                .map(session::textMessage)
-                .ignoreElements()
-                .concatWith(gameFlowMessageFlux);
-
-        return session.send(messages);
+        return session.send(gameFlowMessageFlux);
     }
 
     private static Mono<PlayerInfo> currentUser() {
