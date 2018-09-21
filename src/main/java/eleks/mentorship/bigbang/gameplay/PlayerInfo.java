@@ -1,17 +1,28 @@
 package eleks.mentorship.bigbang.gameplay;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class PlayerInfo {
-    private UUID userId;
-    private String nickname;
+    private final UUID userId;
+    private final String nickname;
+
+    @JsonCreator
+    public PlayerInfo(@JsonProperty("userId") UUID userId,
+                      @JsonProperty("nickname") String nickname) {
+        this.userId = userId;
+        this.nickname = nickname;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
 
     @Override
     public boolean equals(Object o) {

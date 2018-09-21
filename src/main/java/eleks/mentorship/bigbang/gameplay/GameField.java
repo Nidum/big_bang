@@ -17,9 +17,9 @@ import static eleks.mentorship.bigbang.gameplay.GameFieldCell.SPAWN;
 
 @Data
 public class GameField {
-    private List<List<GameFieldCell>> gameField;
-    private List<List<Boolean>> bombs;
-    private List<Position> spawns;
+    private final List<List<GameFieldCell>> gameField;
+    private final List<List<Boolean>> bombs;
+    private final List<Position> spawns;
 
     /**
      * Reads gamefield description from some file.

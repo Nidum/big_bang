@@ -17,12 +17,10 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static eleks.mentorship.bigbang.serialiazation.PlayerReadyConverter.convert;
 import static eleks.mentorship.bigbang.websocket.Room.MAX_CONNECTIONS;
@@ -40,16 +38,16 @@ public class GameEngine {
     private final WebSocketMessageSubscriber messageSubscriber;
     private final MessageAggregator aggregator;
 
-    private GameState currentGameState;
     private Map<PlayerInfo, Boolean> playerReady;
+    private Flux<GameState> state;
 
     // TODO: inject game field (randomly).
     public GameEngine(JsonMessageMapper mapper, MessageAggregator aggregator) {
         this.mapper = mapper;
-        this.currentGameState = new GameState(new HashSet<>(), new GameField("gamefield"));
         this.messageSubscriber = new WebSocketMessageSubscriber();
         this.aggregator = aggregator;
         this.playerReady = new HashMap<>();
+        buildGamePlay();
     }
 
     public void buildGamePlay() {
@@ -58,20 +56,25 @@ public class GameEngine {
 
         Mono<GameMessage> startGameCounterMono = Mono.just(new StartCounterMessage());
 
-        Flux<GameMessage> gameStartFlux = Flux
-                .just(new GameStartMessage(), currentGameState)
+        Flux<GameState> gameStateFlux = Flux
+                .just(new GameState(new HashSet<>(), new GameField("gamefield")));
+
+        Flux<GameMessage> gameStartFlux = Mono
+                .just((GameMessage) new GameStartMessage())
+                .concatWith(gameStateFlux)
                 .delaySubscription(Duration.ofSeconds(3));
 
         Flux<GameMessage> gamePlayMessageFlux = cache
                 .filter(IS_POSITIONING_MESSAGE)
                 .map(x -> (PositioningMessage) x)
                 .buffer(Duration.ofMillis(BUFFER_WINDOW))
-                .flatMap(messages ->
-                        aggregator.aggregate(messages, currentGameState))
-                .doOnNext(msg -> {
+                .withLatestFrom(gameStateFlux, aggregator::aggregate)
+                .flatMap(x -> x)
+                .map(msg -> {
                     if (msg.getType().equals(EXPLOSION)) {
-                        onBombExplosion((BombExplosionMessage) msg);
+                        return onBombExplosion((BombExplosionMessage) msg);
                     }
+                    return msg;
                 });
 
         messageSubscriber.setOutputEvents(
@@ -84,16 +87,24 @@ public class GameEngine {
                         )
         );
         ; // TODO: ignore messages from dead players.
+        this.state = gameStateFlux.cache();
     }
 
-    private void onBombExplosion(BombExplosionMessage explosionMessage) {
-        GamePlayer gamePlayer = explosionMessage.getOwner();
-        GamePlayer fieldPlayer = currentGameState.getPlayers().stream()
-                .filter(x -> x.getPlayerInfo().getUserId().equals(gamePlayer.getPlayerInfo().getUserId()))
+    private GameState onBombExplosion(BombExplosionMessage explosionMessage) {
+        GamePlayer bombOwner = explosionMessage.getOwner();
+        GamePlayer fieldPlayer = explosionMessage.getPlayers().stream()
+                .filter(x -> x.getPlayerInfo().getUserId().equals(bombOwner.getPlayerInfo().getUserId()))
                 .findFirst()
                 .orElseThrow(UserMissingException::new);
-        fieldPlayer.setBombsLeft(fieldPlayer.getBombsLeft() + 1);
-        GameField gameField = currentGameState.getGameField();
+
+        explosionMessage.getPlayers().remove(fieldPlayer);
+        explosionMessage.getPlayers().add(new GamePlayer(fieldPlayer.getPlayerInfo(),
+                fieldPlayer.getLivesLeft(),
+                fieldPlayer.getBombsLeft() + 1,
+                fieldPlayer.getPosition(),
+                fieldPlayer.getLastMoveTime()));
+
+        GameField gameField = explosionMessage.getGameField();
         int width = gameField.getWidth();
         int height = gameField.getHeight();
 
@@ -112,7 +123,7 @@ public class GameEngine {
                 (i) -> (i < height && i < bombPosition.getY() + EXPLOSION_RADIUS),
                 gameField, false, 1);
 
-        List<GamePlayer> damagedPlayers = currentGameState.getPlayers().stream()
+        List<GamePlayer> damagedPlayers = explosionMessage.getPlayers().stream()
                 .filter(player -> {
                     Position position = player.getPosition();
                     return (position.getX() >= leftX && position.getX() <= rightX) ||
@@ -120,12 +131,29 @@ public class GameEngine {
                 })
                 .collect(Collectors.toList());
         gameField.getBombs().get(bombPosition.getX()).set(bombPosition.getY(), false);
-        currentGameState.getPlayers().stream().filter(damagedPlayers::contains).forEach(
-                p -> {
-                    p.setLivesLeft(p.getLivesLeft() - 1);
-                }
-        );
+
+        List<GamePlayer> nonDamagedPlayers = explosionMessage
+                .getPlayers()
+                .stream()
+                .filter(player -> !damagedPlayers.contains(player))
+                .collect(Collectors.toList());
+
+        List<GamePlayer> updateDamagedPlayers = explosionMessage.getPlayers()
+                .stream()
+                .filter(damagedPlayers::contains)
+                .map(player -> new GamePlayer(
+                        player.getPlayerInfo(),
+                        player.getLivesLeft() - 1,
+                        player.getBombsLeft(),
+                        player.getPosition(),
+                        player.getLastMoveTime()))
+                .collect(Collectors.toList());
+
         explosionMessage.setDamaged(damagedPlayers);
+
+        Set<GamePlayer> gamePlayers = Stream.concat(nonDamagedPlayers.stream(), updateDamagedPlayers.stream())
+                .collect(Collectors.toSet());
+        return new GameState(gamePlayers, gameField);
     }
 
     private GameMessage processReadyMessages(GameMessage msg) {
@@ -163,14 +191,16 @@ public class GameEngine {
         return messageFluxCache
                 .filter(x -> x.getType().equals(CONNECT))
                 .take(1)
-                .doOnNext(x -> registerPlayer(x.getPlayerInfo()))
+                .withLatestFrom(state, (msg, currentGameState) -> {
+                    registerPlayer(msg.getPlayerInfo(), currentGameState);
+                    return msg;
+                })
                 .map(x -> new RoomStateMessage(convert(playerReady)))
                 ;
     }
 
-    private void registerPlayer(PlayerInfo playerInfo) {
-        GamePlayer gamePlayer = new GamePlayer(playerInfo, currentGameState.getFreeSpawn());
-        gamePlayer.setLastMoveTime(Instant.now());
+    private void registerPlayer(PlayerInfo playerInfo, GameState currentGameState) {
+        GamePlayer gamePlayer = new GamePlayer(playerInfo, currentGameState.getFreeSpawn(), Instant.now());
         currentGameState.getPlayers().add(gamePlayer);
         playerReady.put(playerInfo, false);
     }

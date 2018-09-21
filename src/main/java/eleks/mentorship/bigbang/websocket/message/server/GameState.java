@@ -6,16 +6,14 @@ import eleks.mentorship.bigbang.gameplay.GameField;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import eleks.mentorship.bigbang.websocket.message.MessageType;
-import lombok.NoArgsConstructor;
 
 import java.util.Set;
 
 import static eleks.mentorship.bigbang.websocket.message.MessageType.STATE;
 
-@NoArgsConstructor
 public class GameState extends GameMessage {
-    private Set<GamePlayer> players;
-    private GameField gameField;
+    private final Set<GamePlayer> players;
+    private final GameField gameField;
 
     public GameState(Set<GamePlayer> players, GameField gameField) {
         this.players = players;
@@ -26,16 +24,8 @@ public class GameState extends GameMessage {
         return players;
     }
 
-    public void setPlayers(Set<GamePlayer> players) {
-        this.players = players;
-    }
-
     public GameField getGameField() {
         return gameField;
-    }
-
-    public void setGameField(GameField gameField) {
-        this.gameField = gameField;
     }
 
     @Override

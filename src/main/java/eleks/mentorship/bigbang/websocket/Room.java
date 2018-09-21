@@ -39,10 +39,6 @@ public class Room {
     }
 
     public Flux<GameMessage> registerPlayer(Flux<UserMessage> userMessageFlux) {
-        if (userCount.incrementAndGet() == 1) {
-            engine.buildGamePlay();
-        }
-
         return engine.subscribePlayer(userMessageFlux);
     }
 }

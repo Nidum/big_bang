@@ -3,7 +3,6 @@ package eleks.mentorship.bigbang.websocket;
 import eleks.mentorship.bigbang.domain.Position;
 import eleks.mentorship.bigbang.exception.MessageFromUnknownUserException;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
-import eleks.mentorship.bigbang.gameplay.PlayerInfo;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import eleks.mentorship.bigbang.websocket.message.server.BombExplosionMessage;
 import eleks.mentorship.bigbang.websocket.message.server.GameState;
@@ -18,9 +17,11 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static eleks.mentorship.bigbang.websocket.message.MessageType.MOVE;
 import static eleks.mentorship.bigbang.websocket.message.MessageType.BOMB;
+import static eleks.mentorship.bigbang.websocket.message.MessageType.MOVE;
 
 @Component
 public class MessageAggregator {
@@ -39,28 +40,59 @@ public class MessageAggregator {
         Flux<GameMessage> result = Flux.empty();
 
         for (PositioningMessage message : messages) {
-            PlayerInfo playerInfo = message.getPlayerInfo();
-            GamePlayer player = oldState.getPlayers().stream()
+            GamePlayer messageOwner = oldState
+                    .getPlayers()
+                    .stream()
                     .filter(gamePlayer -> gamePlayer.getPlayerInfo().equals(message.getPlayerInfo()))
                     .findFirst()
                     .orElseThrow(() -> new MessageFromUnknownUserException("Got message from unknown user: " + message));
 
             if (message.getType().equals(MOVE)) {
-                Instant lastPlayersMove = player.getLastMoveTime();
+                Instant lastPlayersMove = messageOwner.getLastMoveTime();
                 long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurrence());
-                if (timeBetween >= MOVE_DELTA && isCellAvailable(message, player, oldState)) {
-                    player.setPosition(message.getPosition());
-                    result = result.concatWith(Mono.just(oldState));
+
+                if (timeBetween >= MOVE_DELTA && isCellAvailable(message, messageOwner, oldState)) {
+                    Set<GamePlayer> actualPlayers = oldState.getPlayers()
+                            .stream()
+                            .filter(p -> !p.equals(messageOwner))
+                            .collect(Collectors.toSet());
+
+                    GamePlayer newPlayer = new GamePlayer(
+                            messageOwner.getPlayerInfo(),
+                            messageOwner.getLivesLeft(),
+                            messageOwner.getBombsLeft(),
+                            message.getPosition(),
+                            Instant.now()
+                    );
+                    actualPlayers.add(newPlayer);
+
+                    GameState newState = new GameState(actualPlayers, oldState.getGameField());
+                    result = result.concatWith(Mono.just(newState));
                 }
             } else if (message.getType().equals(BOMB)) {
-                if (isCellAvailable(message, player, oldState) &&
-                        !isPlayerOnCell(message, player, oldState) &&
-                        player.getBombsLeft() > 0) {
-                    player.setBombsLeft(player.getBombsLeft() - 1);
+                if (isCellAvailable(message, messageOwner, oldState) &&
+                        !isPlayerOnCell(message, messageOwner, oldState) &&
+                        messageOwner.getBombsLeft() > 0) {
+                    Set<GamePlayer> actualPlayers = oldState.getPlayers()
+                            .stream()
+                            .filter(p -> !p.equals(messageOwner))
+                            .collect(Collectors.toSet());
+
+                    GamePlayer newPlayer = new GamePlayer(
+                            messageOwner.getPlayerInfo(),
+                            messageOwner.getLivesLeft(),
+                            messageOwner.getBombsLeft() - 1,
+                            message.getPosition(),
+                            Instant.now()
+                    );
+                    actualPlayers.add(newPlayer);
+                    GameState newState = new GameState(actualPlayers, oldState.getGameField());
+
                     Position position = message.getPosition();
-                    oldState.getGameField().getBombs().get(position.getX()).set(position.getY(), true);
-                    BombExplosionMessage explosionMessage = new BombExplosionMessage(player, position);
-                    Flux<GameMessage> flux = Flux.just(oldState);
+                    newState.getGameField().getBombs().get(position.getX()).set(position.getY(), true);
+                    BombExplosionMessage explosionMessage = new BombExplosionMessage(newState, newPlayer, position);
+
+                    Flux<GameMessage> flux = Flux.just(newState);
                     result = result
                             .concatWith(flux.mergeWith(Mono.just(explosionMessage)
                                     .delayElement(Duration.ofSeconds(EXPLOSION_DELAY))));
