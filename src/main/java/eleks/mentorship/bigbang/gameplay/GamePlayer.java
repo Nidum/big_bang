@@ -3,11 +3,9 @@ package eleks.mentorship.bigbang.gameplay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import eleks.mentorship.bigbang.domain.Position;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 import java.time.Instant;
 
-@Data
 @AllArgsConstructor
 public class GamePlayer {
     private final PlayerInfo playerInfo;
@@ -25,6 +23,50 @@ public class GamePlayer {
     public GamePlayer(PlayerInfo playerInfo, Position startPosition) {
         this.position = startPosition;
         this.playerInfo = playerInfo;
+    }
+
+    public PlayerInfo getPlayerInfo() {
+        return playerInfo;
+    }
+
+    public Integer getLivesLeft() {
+        return livesLeft;
+    }
+
+    public void setLivesLeft(Integer livesLeft) {
+        this.livesLeft = livesLeft;
+    }
+
+    public Integer getBombsLeft() {
+        return bombsLeft;
+    }
+
+    public void setBombsLeft(Integer bombsLeft) {
+        this.bombsLeft = bombsLeft;
+    }
+
+    public Integer getBombsDelayMultiplier() {
+        return bombsDelayMultiplier;
+    }
+
+    public void setBombsDelayMultiplier(Integer bombsDelayMultiplier) {
+        this.bombsDelayMultiplier = bombsDelayMultiplier;
+    }
+
+    public Position getPosition() {
+        return position;
+    }
+
+    public void setPosition(Position position) {
+        this.position = position;
+    }
+
+    public Instant getLastMoveTime() {
+        return lastMoveTime;
+    }
+
+    public void setLastMoveTime(Instant lastMoveTime) {
+        this.lastMoveTime = lastMoveTime;
     }
 
     @Override

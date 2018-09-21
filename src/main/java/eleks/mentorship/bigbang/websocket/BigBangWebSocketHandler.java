@@ -16,6 +16,8 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+
 @Component
 @AllArgsConstructor
 public class BigBangWebSocketHandler implements WebSocketHandler {
@@ -29,9 +31,13 @@ public class BigBangWebSocketHandler implements WebSocketHandler {
         Flux<UserMessage> userMessageFlux = session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .map(msg -> mapper.toUserMessage(msg))
+                .map(msg -> {
+                    // TODO: accept user occurrence message and ignore ones from future, or older then TTL.
+                    msg.setOccurrence(Instant.now());
+                    return msg;
+                })
                 .replay()
-                .autoConnect()
-                ;
+                .autoConnect();
 
         Flux<GameMessage> userConnectionFlux = room.registerPlayer(userMessageFlux);
         WebSocketMessageSubscriber eventPublisher = room.getEngine().getMessageSubscriber();

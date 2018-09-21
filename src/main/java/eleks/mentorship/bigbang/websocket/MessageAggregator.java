@@ -49,9 +49,7 @@ public class MessageAggregator {
                 Instant lastPlayersMove = player.getLastMoveTime();
                 long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurrence());
                 if (timeBetween >= MOVE_DELTA && isCellAvailable(message, player, oldState)) {
-                    Position oldPosition = player.getPosition();
-                    oldPosition.setX(message.getPosition().getX());
-                    oldPosition.setY(message.getPosition().getY());
+                    player.setPosition(message.getPosition());
                     result = result.concatWith(Mono.just(oldState));
                 }
             } else if (message.getType().equals(BOMB)) {

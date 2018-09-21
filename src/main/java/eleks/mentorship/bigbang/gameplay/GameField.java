@@ -75,10 +75,10 @@ public class GameField {
     }
 
     private void registerSpawns() {
-        for (int i = 0; i < gameField.size(); i++) {
-            for (int j = 0; j < gameField.get(i).size(); j++) {
+        for (int i = 0; i < getHeight(); i++) {
+            for (int j = 0; j < getWidth(); j++) {
                 if (gameField.get(i).get(j).equals(SPAWN)) {
-                    spawns.add(new Position(i, j));
+                    spawns.add(new Position(j, i));
                 }
             }
         }

@@ -6,7 +6,6 @@ import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
 import eleks.mentorship.bigbang.websocket.MessageAggregator;
 import eleks.mentorship.bigbang.websocket.WebSocketMessageSubscriber;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
-import eleks.mentorship.bigbang.websocket.message.MessageType;
 import eleks.mentorship.bigbang.websocket.message.server.*;
 import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
 import eleks.mentorship.bigbang.websocket.message.user.ReadyMessage;
@@ -63,28 +62,17 @@ public class GameEngine {
                 .just(new GameStartMessage(), currentGameState)
                 .delaySubscription(Duration.ofSeconds(3));
 
-        Predicate<GameMessage> isGameMessage = message -> {
-            MessageType msgType = message.getType();
-            return !(msgType.equals(START_COUNTER)
-                    && !(msgType.equals(BOMB))
-                    && !(msgType.equals(MOVE))
-                    && !(msgType.equals(READY)));
-        };
-
-        Flux<GameMessage> gameMessageFlux = cache
-                .filter(isGameMessage)
+        Flux<GameMessage> gamePlayMessageFlux = cache
+                .filter(IS_POSITIONING_MESSAGE)
+                .map(x -> (PositioningMessage) x)
+                .buffer(Duration.ofMillis(BUFFER_WINDOW))
+                .flatMap(messages ->
+                        aggregator.aggregate(messages, currentGameState))
                 .doOnNext(msg -> {
                     if (msg.getType().equals(EXPLOSION)) {
                         onBombExplosion((BombExplosionMessage) msg);
                     }
                 });
-
-        Flux<GameMessage> gamePlayMessageFlux = cache
-                .filter(IS_POSITIONING_MESSAGE)
-                .map(x -> (PositioningMessage) x)
-                .buffer(Duration.ofSeconds(BUFFER_WINDOW))
-                .flatMap(messages ->
-                        aggregator.aggregate(messages, currentGameState));
 
         messageSubscriber.setOutputEvents(
                 cache.filter(x -> x instanceof ReadyMessage || x instanceof RoomStateMessage)
@@ -92,9 +80,7 @@ public class GameEngine {
                         .takeWhile(x -> playerReady.size() != MAX_CONNECTIONS || playerReady.values().contains(false))
                         .concatWith(startGameCounterMono
                                 .concatWith(gameStartFlux)
-                                .concatWith(gameMessageFlux
-                                        .mergeWith(gamePlayMessageFlux)
-                                )
+                                .concatWith(gamePlayMessageFlux)
                         )
         );
         ; // TODO: ignore messages from dead players.

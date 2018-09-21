@@ -1,15 +1,27 @@
 package eleks.mentorship.bigbang.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class Position {
-    private Integer x;
-    private Integer y;
+    private final int x;
+    private final int y;
+
+    @JsonCreator
+    public Position(
+            @JsonProperty("x") int x,
+            @JsonProperty("y") int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public Integer getX() {
+        return x;
+    }
+
+    public Integer getY() {
+        return y;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -18,14 +30,14 @@ public class Position {
 
         Position position = (Position) o;
 
-        if (x != null ? !x.equals(position.x) : position.x != null) return false;
-        return y != null ? y.equals(position.y) : position.y == null;
+        if (x != position.x) return false;
+        return y == position.y;
     }
 
     @Override
     public int hashCode() {
-        int result = x != null ? x.hashCode() : 0;
-        result = 31 * result + (y != null ? y.hashCode() : 0);
+        int result = x;
+        result = 31 * result + y;
         return result;
     }
 }
