@@ -46,6 +46,10 @@ public class MessageAggregator {
                     .findFirst()
                     .orElseThrow(() -> new MessageFromUnknownUserException("Got message from unknown user: " + message));
 
+            if (messageOwner.getLivesLeft() <= 0) {
+                continue;
+            }
+
             if (message.getType().equals(MOVE)) {
                 Instant lastPlayersMove = messageOwner.getLastMoveTime();
                 long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurrence());
@@ -70,7 +74,7 @@ public class MessageAggregator {
                 }
             } else if (message.getType().equals(BOMB)) {
                 if (isCellAvailable(message, messageOwner, oldState) &&
-                      //  !isPlayerOnCell(message, messageOwner, oldState) &&
+                        //  !isPlayerOnCell(message, messageOwner, oldState) &&
                         messageOwner.getBombsLeft() > 0) {
                     Set<GamePlayer> actualPlayers = oldState.getPlayers()
                             .stream()
@@ -138,7 +142,7 @@ public class MessageAggregator {
 
         // Check if cell is free of bombs.
         return !oldState.getGameField().getBombs().get(newPosition.getY()).get(newPosition.getX()) &&
-        // Is it plain field cell.
+                // Is it plain field cell.
                 oldState.getGameField().isCellAvailableForMove(newPosition);
     }
 
