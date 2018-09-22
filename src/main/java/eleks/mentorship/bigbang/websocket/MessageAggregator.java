@@ -89,7 +89,7 @@ public class MessageAggregator {
                     GameState newState = new GameState(actualPlayers, oldState.getGameField());
 
                     Position position = message.getPosition();
-                    newState.getGameField().getBombs().get(position.getX()).set(position.getY(), true);
+                    newState.getGameField().getBombs().get(position.getY()).set(position.getX(), true);
                     BombExplosionMessage explosionMessage = new BombExplosionMessage(newState, newPlayer, position);
 
                     Flux<GameMessage> flux = Flux.just(newState);
