@@ -84,7 +84,7 @@ public class GameEngine {
                     return msg;
                 })
                 .doOnNext(msg -> {
-                    if (msg.getType().equals(STATE)) {
+                    if (msg.getType().equals(STATE) || msg.getType().equals(EXPLOSION)) {
                         System.out.println("Got stateConsumer change: " + msg);
                         stateConsumer.onNext((GameState) msg);
                     }
@@ -102,7 +102,7 @@ public class GameEngine {
         ; // TODO: ignore messages from dead players.
     }
 
-    private GameState onBombExplosion(BombExplosionMessage explosionMessage, GameState oldState) {
+    private synchronized GameState onBombExplosion(BombExplosionMessage explosionMessage, GameState oldState) {
         GamePlayer bombOwner = explosionMessage.getOwner();
         GamePlayer fieldPlayer = oldState
                 .getPlayers()
@@ -150,7 +150,7 @@ public class GameEngine {
 
         Set<GamePlayer> gamePlayers = Stream.concat(nonDamagedPlayers.stream(), updateDamagedPlayers.stream())
                 .collect(Collectors.toSet());
-        return new GameState(gamePlayers, gameField);
+        return new BombExplosionMessage(new GameState(gamePlayers, gameField), bombOwner, bombPosition);
     }
 
     private GameMessage processReadyMessages(GameMessage msg) {
