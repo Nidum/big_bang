@@ -26,7 +26,7 @@ import static eleks.mentorship.bigbang.websocket.message.MessageType.MOVE;
 @Component
 public class MessageAggregator {
     private static final long MOVE_DELTA = 250; // In milliseconds.
-    private static final long EXPLOSION_DELAY = 5; // In seconds.
+    private static final long EXPLOSION_DELAY = 2; // In seconds.
 
     /**
      * Aggregates messages into single game state.
@@ -137,7 +137,9 @@ public class MessageAggregator {
         }
 
         // Check if cell is free of bombs.
-        return !oldState.getGameField().getBombs().get(newPosition.getY()).get(newPosition.getX());
+        return !oldState.getGameField().getBombs().get(newPosition.getY()).get(newPosition.getX()) &&
+        // Is it plain field cell.
+                oldState.getGameField().isCellAvailableForMove(newPosition);
     }
 
     private boolean isPlayerOnCell(PositioningMessage message, GamePlayer player, GameState oldState) {

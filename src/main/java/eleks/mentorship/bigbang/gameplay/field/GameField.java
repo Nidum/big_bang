@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static eleks.mentorship.bigbang.gameplay.field.GameFieldCell.DESTROYABLE_BLOCK;
+import static eleks.mentorship.bigbang.gameplay.field.GameFieldCell.FIELD;
+
 @Data
 public class GameField {
     private final List<List<GameFieldCell>> gameField;
@@ -36,9 +39,9 @@ public class GameField {
         try {
             reader = new BufferedReader(new FileReader(file));
             String line = reader.readLine();
-            gameField = new ArrayList<>();
-            bombs = new ArrayList<>();
-            spawns = new ArrayList<>();
+            this.gameField = new ArrayList<>();
+            this.bombs = new ArrayList<>();
+            this.spawns = new ArrayList<>();
 
             while (line != null) {
                 List<GameFieldCell> row = line.chars()
@@ -60,6 +63,25 @@ public class GameField {
         }
     }
 
+    public void destroyBlocksOnExplosion(ExplosionRange explosionRange) {
+        Position explosionCenter = explosionRange.getCenter();
+        int leftX = explosionCenter.getX() - explosionRange.getLeft();
+        int rightX = explosionCenter.getX() + explosionRange.getRight();
+        for (int i = leftX; i <= rightX; i++) {
+            if (gameField.get(explosionCenter.getY()).get(i).equals(DESTROYABLE_BLOCK)) {
+                gameField.get(explosionCenter.getY()).set(i, FIELD);
+            }
+        }
+
+        int upY = explosionCenter.getY() - explosionRange.getUp();
+        int downY = explosionCenter.getY() + explosionRange.getDown();
+        for (int i = upY; i <= downY; i++) {
+            if (gameField.get(i).get(explosionCenter.getX()).equals(DESTROYABLE_BLOCK)) {
+                gameField.get(i).set(explosionCenter.getX(), FIELD);
+            }
+        }
+    }
+
     public int getWidth() {
         return gameField.get(0).size();
     }
@@ -70,6 +92,11 @@ public class GameField {
 
     public List<Position> getSpawns() {
         return spawns;
+    }
+
+    public boolean isCellAvailableForMove(Position position) {
+        return gameField.get(position.getY()).get(position.getX()).equals(GameFieldCell.SPAWN) ||
+                gameField.get(position.getY()).get(position.getX()).equals(GameFieldCell.FIELD);
     }
 
     private void registerSpawns() {

@@ -77,19 +77,17 @@ public class GameEngine {
                 .buffer(Duration.ofMillis(BUFFER_WINDOW))
                 .withLatestFrom(stateProducer, aggregator::aggregate)
                 .flatMap(x -> x)
+                .withLatestFrom(stateProducer, (msg, state) -> {
+                    if (msg.getType().equals(EXPLOSION)) {
+                        return onBombExplosion((BombExplosionMessage) msg, state);
+                    }
+                    return msg;
+                })
                 .doOnNext(msg -> {
                     if (msg.getType().equals(STATE)) {
                         System.out.println("Got stateConsumer change: " + msg);
                         stateConsumer.onNext((GameState) msg);
                     }
-                })
-                .withLatestFrom(stateProducer, (msg, state) -> {
-                    if (msg.getType().equals(EXPLOSION)) {
-                        GameState gameState = onBombExplosion((BombExplosionMessage) msg, state);
-                        stateConsumer.onNext(gameState);
-                        return gameState;
-                    }
-                    return msg;
                 });
 
         messageSubscriber.setOutputEvents(
@@ -127,7 +125,6 @@ public class GameEngine {
         List<GamePlayer> damagedPlayers = oldState.getPlayers().stream()
                 .filter(player -> explosionRange.isInRange(player.getPosition()))
                 .collect(Collectors.toList());
-        gameField.getBombs().get(bombPosition.getY()).set(bombPosition.getX(), false);
 
         List<GamePlayer> nonDamagedPlayers = oldState
                 .getPlayers()
@@ -148,6 +145,8 @@ public class GameEngine {
                 .collect(Collectors.toList());
 
         explosionMessage.setDamaged(damagedPlayers);
+        gameField.getBombs().get(bombPosition.getY()).set(bombPosition.getX(), false);
+        gameField.destroyBlocksOnExplosion(explosionRange);
 
         Set<GamePlayer> gamePlayers = Stream.concat(nonDamagedPlayers.stream(), updateDamagedPlayers.stream())
                 .collect(Collectors.toSet());
