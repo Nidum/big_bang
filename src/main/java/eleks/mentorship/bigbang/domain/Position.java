@@ -15,11 +15,11 @@ public class Position {
         this.y = y;
     }
 
-    public Integer getX() {
+    public int getX() {
         return x;
     }
 
-    public Integer getY() {
+    public int getY() {
         return y;
     }
 
@@ -30,8 +30,7 @@ public class Position {
 
         Position position = (Position) o;
 
-        if (x != position.x) return false;
-        return y == position.y;
+        return x == position.x && y == position.y;
     }
 
     @Override
@@ -39,5 +38,12 @@ public class Position {
         int result = x;
         result = 31 * result + y;
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + x +
+                "; " + y +
+                ')';
     }
 }

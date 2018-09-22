@@ -9,7 +9,8 @@ import eleks.mentorship.bigbang.websocket.message.user.BombPlacementMessage;
 import eleks.mentorship.bigbang.websocket.message.user.ConnectMessage;
 import eleks.mentorship.bigbang.websocket.message.user.MoveMessage;
 import eleks.mentorship.bigbang.websocket.message.user.ReadyMessage;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Instant;
 
@@ -28,7 +29,8 @@ import java.time.Instant;
         @JsonSubTypes.Type(value = RoomStateMessage.class, name = "room"),
         @JsonSubTypes.Type(value = StartCounterMessage.class, name = "start_counter"),
 })
-@Data
+@Getter
+@Setter
 public abstract class GameMessage {
     protected Instant occurrence;
 

@@ -62,4 +62,15 @@ public class GamePlayer {
         result = 31 * result + bombsLeft.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "GamePlayer{" +
+                "playerInfo=" + playerInfo +
+                ", livesLeft=" + livesLeft +
+                ", bombsLeft=" + bombsLeft +
+                ", position=" + position +
+                ", lastMoveTime=" + lastMoveTime +
+                '}';
+    }
 }

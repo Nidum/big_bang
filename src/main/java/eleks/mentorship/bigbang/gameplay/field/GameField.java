@@ -1,4 +1,4 @@
-package eleks.mentorship.bigbang.gameplay;
+package eleks.mentorship.bigbang.gameplay.field;
 
 import eleks.mentorship.bigbang.domain.Position;
 import lombok.Data;
@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static eleks.mentorship.bigbang.gameplay.GameFieldCell.SPAWN;
 
 @Data
 public class GameField {
@@ -77,7 +75,7 @@ public class GameField {
     private void registerSpawns() {
         for (int i = 0; i < getHeight(); i++) {
             for (int j = 0; j < getWidth(); j++) {
-                if (gameField.get(i).get(j).equals(SPAWN)) {
+                if (gameField.get(i).get(j).equals(GameFieldCell.SPAWN)) {
                     spawns.add(new Position(j, i));
                 }
             }

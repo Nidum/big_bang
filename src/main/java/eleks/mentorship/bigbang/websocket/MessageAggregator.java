@@ -25,12 +25,11 @@ import static eleks.mentorship.bigbang.websocket.message.MessageType.MOVE;
 
 @Component
 public class MessageAggregator {
-    private static final long MOVE_DELTA = 1000; // In milliseconds.
+    private static final long MOVE_DELTA = 250; // In milliseconds.
     private static final long EXPLOSION_DELAY = 5; // In seconds.
 
     /**
      * Aggregates messages into single game state.
-     * Note: this method updates old game state passed as parameter to recent.
      *
      * @param messages Messages to be aggregated.
      * @return Current game state.
@@ -71,11 +70,11 @@ public class MessageAggregator {
                 }
             } else if (message.getType().equals(BOMB)) {
                 if (isCellAvailable(message, messageOwner, oldState) &&
-                        !isPlayerOnCell(message, messageOwner, oldState) &&
+                      //  !isPlayerOnCell(message, messageOwner, oldState) &&
                         messageOwner.getBombsLeft() > 0) {
                     Set<GamePlayer> actualPlayers = oldState.getPlayers()
                             .stream()
-                            .filter(p -> !p.equals(messageOwner))
+                            .filter(p -> !p.getPlayerInfo().equals(messageOwner.getPlayerInfo()))
                             .collect(Collectors.toSet());
 
                     GamePlayer newPlayer = new GamePlayer(
@@ -89,7 +88,11 @@ public class MessageAggregator {
                     GameState newState = new GameState(actualPlayers, oldState.getGameField());
 
                     Position position = message.getPosition();
-                    newState.getGameField().getBombs().get(position.getY()).set(position.getX(), true);
+                    // TODO: read about Law of Demetra.
+                    newState.getGameField()
+                            .getBombs()
+                            .get(position.getY())
+                            .set(position.getX(), true);
                     BombExplosionMessage explosionMessage = new BombExplosionMessage(newState, newPlayer, position);
 
                     Flux<GameMessage> flux = Flux.just(newState);
@@ -134,7 +137,7 @@ public class MessageAggregator {
         }
 
         // Check if cell is free of bombs.
-        return !oldState.getGameField().getBombs().get(newPosition.getX()).get(newPosition.getY());
+        return !oldState.getGameField().getBombs().get(newPosition.getY()).get(newPosition.getX());
     }
 
     private boolean isPlayerOnCell(PositioningMessage message, GamePlayer player, GameState oldState) {

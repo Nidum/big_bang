@@ -9,9 +9,9 @@ import java.util.List;
 import static eleks.mentorship.bigbang.websocket.message.MessageType.EXPLOSION;
 
 public class BombExplosionMessage extends GameState {
-    protected GamePlayer owner;
-    protected Position position;
-    List<GamePlayer> damaged;
+    private final GamePlayer owner;
+    private final Position position;
+    private List<GamePlayer> damaged;
 
     public BombExplosionMessage(GameState gameState, GamePlayer owner, Position position) {
         super(gameState.getPlayers(), gameState.getGameField());
@@ -23,16 +23,8 @@ public class BombExplosionMessage extends GameState {
         return owner;
     }
 
-    public void setOwner(GamePlayer owner) {
-        this.owner = owner;
-    }
-
     public Position getPosition() {
         return position;
-    }
-
-    public void setPosition(Position position) {
-        this.position = position;
     }
 
     public List<GamePlayer> getDamaged() {

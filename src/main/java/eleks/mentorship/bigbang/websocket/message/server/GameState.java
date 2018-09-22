@@ -2,11 +2,12 @@ package eleks.mentorship.bigbang.websocket.message.server;
 
 import eleks.mentorship.bigbang.domain.Position;
 import eleks.mentorship.bigbang.exception.TooMuchPlayersInRoomException;
-import eleks.mentorship.bigbang.gameplay.GameField;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
+import eleks.mentorship.bigbang.gameplay.field.GameField;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import eleks.mentorship.bigbang.websocket.message.MessageType;
 
+import java.time.Instant;
 import java.util.Set;
 
 import static eleks.mentorship.bigbang.websocket.message.MessageType.STATE;
@@ -18,6 +19,7 @@ public class GameState extends GameMessage {
     public GameState(Set<GamePlayer> players, GameField gameField) {
         this.players = players;
         this.gameField = gameField;
+        this.occurrence = Instant.now();
     }
 
     public Set<GamePlayer> getPlayers() {
@@ -41,5 +43,14 @@ public class GameState extends GameMessage {
                         .noneMatch(p -> p.getPosition().equals(spawn)))
                 .findFirst()
                 .orElseThrow(TooMuchPlayersInRoomException::new);
+    }
+
+    @Override
+    public String toString() {
+        return "GameState{" +
+                "players=" + players +
+                ", gameField=" + gameField +
+                ", occurrence=" + occurrence +
+                '}';
     }
 }

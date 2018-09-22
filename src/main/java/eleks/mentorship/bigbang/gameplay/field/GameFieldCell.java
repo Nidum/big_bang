@@ -1,4 +1,4 @@
-package eleks.mentorship.bigbang.gameplay;
+package eleks.mentorship.bigbang.gameplay.field;
 
 public enum GameFieldCell {
     FIELD('f'),
