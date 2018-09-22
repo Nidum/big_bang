@@ -10,6 +10,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
+import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
 
 import java.net.URI;
 
@@ -24,13 +25,15 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+        RedirectServerAuthenticationSuccessHandler redirectHandler = new RedirectServerAuthenticationSuccessHandler("http://localhost:4200");
+        redirectHandler.setRequestCache(NoOpServerRequestCache.getInstance());
         return http
                 .authorizeExchange()
                 .anyExchange()
                 .authenticated()
                 .and()
                 .formLogin()
-                .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("http://localhost:4200"))
+                .authenticationSuccessHandler(redirectHandler)
                 .and()
                 .build();
     }
