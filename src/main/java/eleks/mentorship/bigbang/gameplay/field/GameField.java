@@ -23,12 +23,12 @@ public class GameField {
     private final List<Position> spawns;
 
     /**
-     * Reads gamefield description from some file.
+     * Reads game field description from some file.
      *
      * @param fileName Name of the file to be used for game field generation.
      */
     public GameField(String fileName) {
-        File file = null;
+        File file;
         try {
             file = new ClassPathResource(fileName).getFile();
         } catch (IOException e) {
@@ -108,5 +108,13 @@ public class GameField {
                 }
             }
         }
+    }
+
+    public void removeBomb(Position position) {
+        bombs.get(position.getY()).set(position.getX(), false);
+    }
+
+    public void setBomb(Position position) {
+        bombs.get(position.getY()).set(position.getX(), true);
     }
 }

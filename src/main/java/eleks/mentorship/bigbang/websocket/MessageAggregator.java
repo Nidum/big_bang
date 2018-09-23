@@ -1,27 +1,21 @@
 package eleks.mentorship.bigbang.websocket;
 
 import eleks.mentorship.bigbang.domain.Position;
+import eleks.mentorship.bigbang.exception.InvalidMessageException;
 import eleks.mentorship.bigbang.exception.MessageFromUnknownUserException;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
 import eleks.mentorship.bigbang.websocket.message.GameMessage;
 import eleks.mentorship.bigbang.websocket.message.server.BombExplosionMessage;
 import eleks.mentorship.bigbang.websocket.message.server.GameState;
 import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
-import eleks.mentorship.bigbang.websocket.message.user.UserMessage;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.UnicastProcessor;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static eleks.mentorship.bigbang.websocket.message.MessageType.BOMB;
-import static eleks.mentorship.bigbang.websocket.message.MessageType.MOVE;
 
 @Component
 public class MessageAggregator {
@@ -34,9 +28,10 @@ public class MessageAggregator {
      * @param messages Messages to be aggregated.
      * @return Current game state.
      */
-    public Flux<GameMessage> aggregate(List<PositioningMessage> messages, GameState oldState) {
-        messages.sort(Comparator.comparing(UserMessage::getOccurrence));
-        Flux<GameMessage> result = Flux.empty();
+    public GameMessage aggregate(List<PositioningMessage> messages, GameState oldState, UnicastProcessor<BombExplosionMessage> bombProducer) {
+
+        GameState newState = new GameState(oldState);
+        newState.cleanExplosions();
 
         for (PositioningMessage message : messages) {
             GamePlayer messageOwner = oldState
@@ -45,68 +40,36 @@ public class MessageAggregator {
                     .filter(gamePlayer -> gamePlayer.getPlayerInfo().equals(message.getPlayerInfo()))
                     .findFirst()
                     .orElseThrow(() -> new MessageFromUnknownUserException("Got message from unknown user: " + message));
+            boolean isPlayerAlive = messageOwner.getLivesLeft() > 0;
+            switch (message.getType()) {
+                case MOVE:
+                    Instant lastPlayersMove = messageOwner.getLastMoveTime();
+                    long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurrence());
 
-            if (messageOwner.getLivesLeft() <= 0) {
-                continue;
+                    if (timeBetween >= MOVE_DELTA &&
+                            isCellAvailable(message, messageOwner, oldState) &&
+                            isPlayerAlive) {
+                        newState.movePlayer(message.getPosition(), message.getPlayerInfo());
+                    }
+                    break;
+                case BOMB:
+                    if (isCellAvailable(message, messageOwner, oldState) &&
+                            messageOwner.getBombsLeft() > 0 &&
+                            isPlayerAlive) {
+                        BombExplosionMessage bombExplosionMessage = newState.placeBomb(message.getPosition(), messageOwner);
+                        Mono.just(bombExplosionMessage).delayElement(Duration.ofSeconds(3)).log().subscribe(bombProducer);
+                    }
+                    break;
+                case EXPLOSION:
+                    message.setOccurrence(Instant.now());
+                    newState.explodeBomb((BombExplosionMessage) message);
+                    break;
+                default:
+                    throw new InvalidMessageException();
             }
 
-            if (message.getType().equals(MOVE)) {
-                Instant lastPlayersMove = messageOwner.getLastMoveTime();
-                long timeBetween = ChronoUnit.MILLIS.between(lastPlayersMove, message.getOccurrence());
-
-                if (timeBetween >= MOVE_DELTA && isCellAvailable(message, messageOwner, oldState)) {
-                    Set<GamePlayer> actualPlayers = oldState.getPlayers()
-                            .stream()
-                            .filter(p -> !p.equals(messageOwner))
-                            .collect(Collectors.toSet());
-
-                    GamePlayer newPlayer = new GamePlayer(
-                            messageOwner.getPlayerInfo(),
-                            messageOwner.getLivesLeft(),
-                            messageOwner.getBombsLeft(),
-                            message.getPosition(),
-                            Instant.now()
-                    );
-                    actualPlayers.add(newPlayer);
-
-                    GameState newState = new GameState(actualPlayers, oldState.getGameField());
-                    result = result.concatWith(Mono.just(newState));
-                }
-            } else if (message.getType().equals(BOMB)) {
-                if (isCellAvailable(message, messageOwner, oldState) &&
-                        //  !isPlayerOnCell(message, messageOwner, oldState) &&
-                        messageOwner.getBombsLeft() > 0) {
-                    Set<GamePlayer> actualPlayers = oldState.getPlayers()
-                            .stream()
-                            .filter(p -> !p.getPlayerInfo().equals(messageOwner.getPlayerInfo()))
-                            .collect(Collectors.toSet());
-
-                    GamePlayer newPlayer = new GamePlayer(
-                            messageOwner.getPlayerInfo(),
-                            messageOwner.getLivesLeft(),
-                            messageOwner.getBombsLeft() - 1,
-                            message.getPosition(),
-                            Instant.now()
-                    );
-                    actualPlayers.add(newPlayer);
-                    GameState newState = new GameState(actualPlayers, oldState.getGameField());
-
-                    Position position = message.getPosition();
-                    // TODO: read about Law of Demetra.
-                    newState.getGameField()
-                            .getBombs()
-                            .get(position.getY())
-                            .set(position.getX(), true);
-                    BombExplosionMessage explosionMessage = new BombExplosionMessage(newState, newPlayer, position, null);
-
-                    Flux<GameMessage> flux = Flux.just(newState);
-                    result = result
-                            .concatWith(flux.mergeWith(Mono.just(explosionMessage)
-                                    .delayElement(Duration.ofSeconds(EXPLOSION_DELAY))));
-                }
-            }
         }
-        return result;
+        return newState;
     }
 
     /**
