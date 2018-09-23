@@ -12,10 +12,10 @@ import reactor.core.publisher.Mono;
 import java.security.Principal;
 
 @RestController
-public class GameController {
+public class UserController {
 
-    @GetMapping("/user")
-    public Mono<PlayerInfo> greet(Mono<Principal> principal) {
+    @GetMapping("/api-user")
+    public Mono<PlayerInfo> getUser(Mono<Principal> principal) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
                 .map(Authentication::getPrincipal)
