@@ -79,7 +79,7 @@ public class GameEngine {
                 .filter(IS_POSITIONING_MESSAGE)
                 .map(x -> (PositioningMessage) x)
                 .buffer(Duration.ofMillis(BUFFER_WINDOW))
-                .withLatestFrom(stateProducer, aggregator::aggregate)
+                .zipWith(stateProducer, aggregator::aggregate)
                 .flatMap(x -> x)
                 .zipWith(stateProducer, (msg, state) -> {
                     if (msg.getType().equals(EXPLOSION)) {
@@ -89,6 +89,7 @@ public class GameEngine {
                 })
                 .doOnNext(msg -> {
                     if (msg.getType().equals(STATE) || msg.getType().equals(EXPLOSION)) {
+                        stateConsumer.onNext((GameState) msg);
                         stateConsumer.onNext((GameState) msg);
                     }
                 })
