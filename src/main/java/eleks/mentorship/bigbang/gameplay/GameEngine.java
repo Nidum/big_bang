@@ -1,5 +1,6 @@
 package eleks.mentorship.bigbang.gameplay;
 
+import eleks.mentorship.bigbang.exception.InvalidMessageException;
 import eleks.mentorship.bigbang.gameplay.field.GameField;
 import eleks.mentorship.bigbang.mapper.JsonMessageMapper;
 import eleks.mentorship.bigbang.websocket.MessageAggregator;
@@ -88,7 +89,18 @@ public class GameEngine {
                         stateConsumer.onNext((GameState) msg);
                     }
                 })
-                .concatWith(Mono.just((GameMessage) new GameOverMessage()))
+                .concatWith(
+                        stateProducer
+                                .last()
+                                .map(state -> {
+                                    GamePlayer winner = state
+                                            .getPlayers()
+                                            .stream()
+                                            .filter(p -> p.getLivesLeft() > 0)
+                                            .findFirst()
+                                            .orElseThrow(InvalidMessageException::new);
+                                    return new GameOverMessage(winner.getPlayerInfo());
+                                }))
                 .cache();
 
         messageSubscriber.setOutputEvents(
