@@ -14,7 +14,7 @@ import java.security.Principal;
 @RestController
 public class UserController {
 
-    @GetMapping("/api-user")
+    @GetMapping("/api/user")
     public Mono<PlayerInfo> getUser(Mono<Principal> principal) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)

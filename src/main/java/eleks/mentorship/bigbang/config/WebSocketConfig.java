@@ -19,7 +19,7 @@ public class WebSocketConfig {
     @Bean
     public HandlerMapping webSocketHandlerMapping() {
         Map<String, WebSocketHandler> urlMapping = new HashMap<>();
-        urlMapping.put("/api-game", webSocketHandler);
+        urlMapping.put("/api/game", webSocketHandler);
 
         SimpleUrlHandlerMapping handlerMapping = new SimpleUrlHandlerMapping();
         handlerMapping.setUrlMap(urlMapping);
