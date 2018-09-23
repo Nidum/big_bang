@@ -83,11 +83,11 @@ public class GameEngine {
                     return msg;
                 })
                 .doOnNext(msg -> {
-                    if (msg.getType().equals(STATE)) {
-                        System.out.println("Got stateConsumer change: " + msg);
+                    if (msg.getType().equals(STATE) || msg.getType().equals(EXPLOSION)) {
                         stateConsumer.onNext((GameState) msg);
                     }
-                });
+                })
+                .cache();
 
         messageSubscriber.setOutputEvents(
                 cache.filter(x -> x instanceof ReadyMessage || x instanceof RoomStateMessage)
