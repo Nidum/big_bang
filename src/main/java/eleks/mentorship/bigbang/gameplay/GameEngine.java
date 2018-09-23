@@ -35,7 +35,7 @@ import static eleks.mentorship.bigbang.websocket.message.MessageUtils.IS_POSITIO
 public class GameEngine {
     private static final int EXPLOSION_DELAY = 2; // In seconds.
     private static final int EXPLOSION_RADIUS = 3; // In cells.
-    private static final int BUFFER_WINDOW = 200; // In milliseconds.
+    private static final int BUFFER_WINDOW = 100; // In milliseconds.
 
     private final JsonMessageMapper mapper;
     private final WebSocketMessageSubscriber messageSubscriber;
@@ -43,7 +43,6 @@ public class GameEngine {
 
     private DirectProcessor<GameState> stateConsumer;
     private Flux<GameState> stateProducer;
-
 
     private Map<PlayerInfo, Boolean> playerReady;
 
@@ -150,7 +149,7 @@ public class GameEngine {
 
         Set<GamePlayer> gamePlayers = Stream.concat(nonDamagedPlayers.stream(), updateDamagedPlayers.stream())
                 .collect(Collectors.toSet());
-        return new BombExplosionMessage(new GameState(gamePlayers, gameField), bombOwner, bombPosition);
+        return new BombExplosionMessage(new GameState(gamePlayers, gameField), bombOwner, bombPosition, explosionRange);
     }
 
     private GameMessage processReadyMessages(GameMessage msg) {

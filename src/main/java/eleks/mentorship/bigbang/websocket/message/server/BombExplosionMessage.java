@@ -2,6 +2,7 @@ package eleks.mentorship.bigbang.websocket.message.server;
 
 import eleks.mentorship.bigbang.domain.Position;
 import eleks.mentorship.bigbang.gameplay.GamePlayer;
+import eleks.mentorship.bigbang.gameplay.field.ExplosionRange;
 import eleks.mentorship.bigbang.websocket.message.MessageType;
 
 import java.util.List;
@@ -12,11 +13,13 @@ public class BombExplosionMessage extends GameState {
     private final GamePlayer owner;
     private final Position position;
     private List<GamePlayer> damaged;
+    private final ExplosionRange explosionRange;
 
-    public BombExplosionMessage(GameState gameState, GamePlayer owner, Position position) {
+    public BombExplosionMessage(GameState gameState, GamePlayer owner, Position position, ExplosionRange explosionRange) {
         super(gameState.getPlayers(), gameState.getGameField());
         this.owner = owner;
         this.position = position;
+        this.explosionRange = explosionRange;
     }
 
     public GamePlayer getOwner() {
@@ -29,6 +32,10 @@ public class BombExplosionMessage extends GameState {
 
     public List<GamePlayer> getDamaged() {
         return damaged;
+    }
+
+    public ExplosionRange getExplosionRange() {
+        return explosionRange;
     }
 
     public void setDamaged(List<GamePlayer> damaged) {
