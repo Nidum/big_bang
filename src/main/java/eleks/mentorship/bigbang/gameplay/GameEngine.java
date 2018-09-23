@@ -83,7 +83,7 @@ public class GameEngine {
                     return msg;
                 })
                 .doOnNext(msg -> {
-                    if (msg.getType().equals(STATE) || msg.getType().equals(EXPLOSION)) {
+                    if (msg.getType().equals(STATE)) {
                         System.out.println("Got stateConsumer change: " + msg);
                         stateConsumer.onNext((GameState) msg);
                     }

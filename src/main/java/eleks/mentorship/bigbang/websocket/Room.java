@@ -16,7 +16,7 @@ public class Room {
 
     private String name;
     private GameEngine engine;
-    AtomicInteger userCount = new AtomicInteger(0);
+    private AtomicInteger userCount = new AtomicInteger(0);
 
     private boolean gameStarted = false;
 
@@ -39,6 +39,10 @@ public class Room {
     }
 
     public Flux<GameMessage> registerPlayer(Flux<UserMessage> userMessageFlux) {
+        userCount.incrementAndGet();
+        if (userCount.get() == MAX_CONNECTIONS) {
+            gameStarted = true;
+        }
         return engine.subscribePlayer(userMessageFlux);
     }
 }
