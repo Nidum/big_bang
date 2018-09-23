@@ -19,7 +19,7 @@ public class GamePlayer {
         this.position = startPosition;
         this.playerInfo = playerInfo;
         this.livesLeft = 3;
-        this.bombsLeft = 5;
+        this.bombsLeft = 3;
         this.lastMoveTime = lastMoveTime;
     }
 

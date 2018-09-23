@@ -25,7 +25,7 @@ import static eleks.mentorship.bigbang.websocket.message.MessageType.MOVE;
 
 @Component
 public class MessageAggregator {
-    private static final long MOVE_DELTA = 250; // In milliseconds.
+    private static final long MOVE_DELTA = 100; // In milliseconds.
     private static final long EXPLOSION_DELAY = 2; // In seconds.
 
     /**

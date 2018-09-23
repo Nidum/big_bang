@@ -21,7 +21,7 @@ public class ExplosionRange {
         int width = gameField.getWidth();
 
         // Left.
-        for (int i = bombPosition.getX() - 1, j = 1; i > 0 && i > bombPosition.getX() - explosionRange; i--, j++) {
+        for (int i = bombPosition.getX() - 1, j = 1; i >= 0 && i > bombPosition.getX() - explosionRange; i--, j++) {
             GameFieldCell nextCell = gameField.getGameField().get(bombPosition.getY()).get(i);
             range.left = j;
             if (nextCell.equals(GameFieldCell.STATIC_BLOCK)) {
@@ -48,7 +48,7 @@ public class ExplosionRange {
         }
 
         // Up.
-        for (int i = bombPosition.getY() - 1, j = 1; i > 0 && i > bombPosition.getY() - explosionRange; i--, j++) {
+        for (int i = bombPosition.getY() - 1, j = 1; i >= 0 && i > bombPosition.getY() - explosionRange; i--, j++) {
             GameFieldCell nextCell = gameField.getGameField().get(i).get(bombPosition.getX());
             range.up = j;
             if (nextCell.equals(GameFieldCell.STATIC_BLOCK)) {

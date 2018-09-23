@@ -67,10 +67,10 @@ public class GameField {
         Position explosionCenter = explosionRange.getCenter();
         int leftX = explosionCenter.getX() - explosionRange.getLeft();
         int rightX = explosionCenter.getX() + explosionRange.getRight();
+
         for (int i = leftX; i <= rightX; i++) {
             if (gameField.get(explosionCenter.getY()).get(i).equals(DESTROYABLE_BLOCK)) {
                 gameField.get(explosionCenter.getY()).set(i, FIELD);
-                break;
             }
         }
 
@@ -79,7 +79,6 @@ public class GameField {
         for (int i = upY; i <= downY; i++) {
             if (gameField.get(i).get(explosionCenter.getX()).equals(DESTROYABLE_BLOCK)) {
                 gameField.get(i).set(explosionCenter.getX(), FIELD);
-                break;
             }
         }
     }

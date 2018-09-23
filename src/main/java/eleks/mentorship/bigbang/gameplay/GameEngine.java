@@ -55,7 +55,12 @@ public class GameEngine {
         this.stateConsumer = DirectProcessor.create();
         this.stateProducer = stateConsumer
                 .startWith(new GameState(new HashSet<>(), new GameField("gamefield")))
-                .cache();
+                .cache()
+                .log()
+                .takeUntil(state ->
+                        state.getPlayers().size() == MAX_CONNECTIONS &&
+                                state.getPlayers().stream().filter(p -> p.getLivesLeft() == 0).count() == MAX_CONNECTIONS - 1)
+        ;
 
         buildGamePlay();
     }
@@ -76,7 +81,7 @@ public class GameEngine {
                 .buffer(Duration.ofMillis(BUFFER_WINDOW))
                 .withLatestFrom(stateProducer, aggregator::aggregate)
                 .flatMap(x -> x)
-                .withLatestFrom(stateProducer, (msg, state) -> {
+                .zipWith(stateProducer, (msg, state) -> {
                     if (msg.getType().equals(EXPLOSION)) {
                         return onBombExplosion((BombExplosionMessage) msg, state);
                     }
@@ -87,6 +92,7 @@ public class GameEngine {
                         stateConsumer.onNext((GameState) msg);
                     }
                 })
+                .concatWith(Mono.just((GameMessage) new GameOverMessage()))
                 .cache();
 
         messageSubscriber.setOutputEvents(
@@ -95,10 +101,10 @@ public class GameEngine {
                         .takeWhile(x -> playerReady.size() != MAX_CONNECTIONS || playerReady.values().contains(false))
                         .concatWith(startGameCounterMono
                                 .concatWith(gameStartFlux)
-                                .concatWith(gamePlayMessageFlux)
+                                .concatWith(gamePlayMessageFlux
+                                )
                         )
         );
-        ; // TODO: ignore messages from dead players.
     }
 
     private synchronized GameState onBombExplosion(BombExplosionMessage explosionMessage, GameState oldState) {
@@ -111,11 +117,12 @@ public class GameEngine {
                 .orElseThrow(UserMissingException::new);
 
         oldState.getPlayers().remove(fieldPlayer);
-        oldState.getPlayers().add(new GamePlayer(bombOwner.getPlayerInfo(),
-                fieldPlayer.getLivesLeft(),
-                bombOwner.getBombsLeft() + 1,
-                fieldPlayer.getPosition(),
-                bombOwner.getLastMoveTime()));
+        oldState.getPlayers().add(
+                new GamePlayer(bombOwner.getPlayerInfo(),
+                        fieldPlayer.getLivesLeft(),
+                        fieldPlayer.getBombsLeft() + 1,
+                        fieldPlayer.getPosition(),
+                        fieldPlayer.getLastMoveTime()));
 
         GameField gameField = oldState.getGameField();
         Position bombPosition = explosionMessage.getPosition();
@@ -137,7 +144,7 @@ public class GameEngine {
                 .filter(damagedPlayers::contains)
                 .map(player -> new GamePlayer(
                         player.getPlayerInfo(),
-                        player.getLivesLeft() - 1,
+                        player.getLivesLeft() - 1 > 0 ? player.getLivesLeft() - 1 : 0,
                         player.getBombsLeft(),
                         player.getPosition(),
                         player.getLastMoveTime()))
