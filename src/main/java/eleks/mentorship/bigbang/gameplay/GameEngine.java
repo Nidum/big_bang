@@ -62,7 +62,7 @@ public class GameEngine {
                 .cache()
                 .takeUntil(state ->
                         state.getPlayers().size() == MAX_CONNECTIONS &&
-                                state.getPlayers().stream().filter(p -> p.getLivesLeft() == 0).count() == MAX_CONNECTIONS - 1);
+                                state.getPlayers().stream().filter(p -> p.getLivesLeft() == 0).count() >= MAX_CONNECTIONS - 1);
 
         buildGamePlay();
     }
