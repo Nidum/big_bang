@@ -1,5 +1,6 @@
 package eleks.mentorship.bigbang.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -18,6 +19,9 @@ import java.net.URI;
 @EnableWebFluxSecurity
 public class WebSecurityConfig {
 
+    @Autowired
+    private SystemConfig config;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
@@ -25,7 +29,7 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-        RedirectServerAuthenticationSuccessHandler redirectHandler = new RedirectServerAuthenticationSuccessHandler("http://localhost:4200");
+        RedirectServerAuthenticationSuccessHandler redirectHandler = new RedirectServerAuthenticationSuccessHandler(config.getFrontEndLocation());
         redirectHandler.setRequestCache(NoOpServerRequestCache.getInstance());
         return http
                 .authorizeExchange()
