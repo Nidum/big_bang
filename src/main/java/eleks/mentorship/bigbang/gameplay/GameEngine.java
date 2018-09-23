@@ -81,7 +81,7 @@ public class GameEngine {
                 .buffer(Duration.ofMillis(BUFFER_WINDOW))
                 .zipWith(stateProducer, aggregator::aggregate)
                 .flatMap(x -> x)
-                .zipWith(stateProducer, (msg, state) -> {
+                .withLatestFrom(stateProducer, (msg, state) -> {
                     if (msg.getType().equals(EXPLOSION)) {
                         return onBombExplosion((BombExplosionMessage) msg, state);
                     }
@@ -89,7 +89,6 @@ public class GameEngine {
                 })
                 .doOnNext(msg -> {
                     if (msg.getType().equals(STATE) || msg.getType().equals(EXPLOSION)) {
-                        stateConsumer.onNext((GameState) msg);
                         stateConsumer.onNext((GameState) msg);
                     }
                 })
