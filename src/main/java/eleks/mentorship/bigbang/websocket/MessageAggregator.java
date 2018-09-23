@@ -9,8 +9,8 @@ import eleks.mentorship.bigbang.websocket.message.server.BombExplosionMessage;
 import eleks.mentorship.bigbang.websocket.message.server.GameState;
 import eleks.mentorship.bigbang.websocket.message.user.PositioningMessage;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.UnicastProcessor;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -28,7 +28,8 @@ public class MessageAggregator {
      * @param messages Messages to be aggregated.
      * @return Current game state.
      */
-    public GameMessage aggregate(List<PositioningMessage> messages, GameState oldState, UnicastProcessor<BombExplosionMessage> bombProducer) {
+    public GameMessage aggregate(List<PositioningMessage> messages, GameState oldState,
+                                 FluxSink<BombExplosionMessage> bombConsumer) {
 
         GameState newState = new GameState(oldState);
         newState.cleanExplosions();
@@ -57,7 +58,10 @@ public class MessageAggregator {
                             messageOwner.getBombsLeft() > 0 &&
                             isPlayerAlive) {
                         BombExplosionMessage bombExplosionMessage = newState.placeBomb(message.getPosition(), messageOwner);
-                        Mono.just(bombExplosionMessage).delayElement(Duration.ofSeconds(3)).log().subscribe(bombProducer);
+                        Mono.just(bombExplosionMessage)
+                                .delaySubscription(Duration.ofSeconds(EXPLOSION_DELAY))
+                                .log()
+                                .subscribe(bombConsumer::next);
                     }
                     break;
                 case EXPLOSION:

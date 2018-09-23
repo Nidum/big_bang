@@ -13,12 +13,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.UnicastProcessor;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import static eleks.mentorship.bigbang.serialiazation.PlayerReadyConverter.convert;
 import static eleks.mentorship.bigbang.websocket.Room.MAX_CONNECTIONS;
@@ -37,8 +40,9 @@ public class GameEngine {
 
     private DirectProcessor<GameState> stateConsumer;
     private Flux<GameState> stateProducer;
-    private UnicastProcessor<BombExplosionMessage> bombConsumer;
-    private Flux<BombExplosionMessage> bombProducer;
+
+    DirectProcessor<BombExplosionMessage> bombProducer;
+    private FluxSink<BombExplosionMessage> bombConsumer;
 
     private Map<PlayerInfo, Boolean> playerReady;
 
@@ -49,8 +53,8 @@ public class GameEngine {
         this.aggregator = aggregator;
         this.playerReady = new HashMap<>();
 
-        this.bombConsumer = UnicastProcessor.create();
-        this.bombProducer = bombConsumer.cache().log();
+        this.bombProducer = DirectProcessor.create();
+        this.bombConsumer = bombProducer.sink(FluxSink.OverflowStrategy.BUFFER);
 
         this.stateConsumer = DirectProcessor.create();
         this.stateProducer = stateConsumer
