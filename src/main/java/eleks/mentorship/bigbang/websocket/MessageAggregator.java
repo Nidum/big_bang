@@ -60,7 +60,6 @@ public class MessageAggregator {
                         BombExplosionMessage bombExplosionMessage = newState.placeBomb(message.getPosition(), messageOwner);
                         Mono.just(bombExplosionMessage)
                                 .delaySubscription(Duration.ofSeconds(EXPLOSION_DELAY))
-                                .log()
                                 .subscribe(bombConsumer::next);
                     }
                     break;
